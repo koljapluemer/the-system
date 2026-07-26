@@ -77,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
             padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Text('Lists'),
           ),
-          for (final spec in noteTypeSpecs.where((s) => s.showInLists))
+          for (final spec in noteTypeSpecs)
             ListTile(
               title: Text(spec.label),
               trailing: const Icon(Icons.chevron_right),

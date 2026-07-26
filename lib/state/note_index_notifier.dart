@@ -9,10 +9,10 @@ import 'providers.dart';
 /// Properties allowed by assets/note_schema.json for a primaryType that
 /// aren't already covered by [NoteTypeSpec.fields], because they're managed
 /// by a dedicated flow rather than the generic edit form (see the
-/// `log`/`flashcard` entries in note_type_spec.dart). Consulted by
+/// `milestone`/`flashcard` entries in note_type_spec.dart). Consulted by
 /// [NoteIndexNotifier.changePrimaryType] to know what to keep.
 const _extraKeysOutsideFields = <String, List<String>>{
-  'log': ['createdAt'],
+  'milestone': ['logs'],
   'flashcard': ['fsrs'],
 };
 
@@ -117,26 +117,6 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
     await write(relatedFilename, {...related, 'rels': mirrorRels.toList()});
   }
 
-  /// Creates a new `primaryType: "log"` note, stamped with the current
-  /// moment as `createdAt` (ISO 8601) — a generic title-only
-  /// [createFromSpec] create can't set that, so this is used instead (see
-  /// the `log` branch in `_AddScreenState._createNote`). Always reached via
-  /// the relationship-attach flow from a milestone note, never as a
-  /// standalone create.
-  Future<String> createLog({required String title}) async {
-    final folder = (await ref.read(dataFolderProvider.future))!;
-    final content = <String, dynamic>{
-      'primaryType': 'log',
-      'title': title,
-      'content': '',
-      'createdAt': DateTime.now().toIso8601String(),
-    };
-    final filename =
-        await ref.read(notesServiceProvider).createNote(folder, content, slugSource: title);
-    await update((index) => index.copyWith(entries: {...index.entries, filename: content}));
-    return filename;
-  }
-
   /// Creates a new note of [spec]'s primaryType with [title] and an empty
   /// string for every other field in [spec.fields] (e.g. `content`), for the
   /// "new note" action on a type's Lists screen. [secondaryType], when
@@ -171,14 +151,14 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
   /// keeps matching assets/note_schema.json (`additionalProperties: false`)
   /// for its new shape: keeps fields common to every type (title, aliases,
   /// rels, extraData) plus any field whose key exists in both the old and
-  /// new type (e.g. `content` surviving an art→story switch), drops
+  /// new type (e.g. `content` surviving an art→activity switch), drops
   /// everything else unique to the old type, and fills any of [newSpec]'s
   /// fields still missing with `''`. `secondaryType` and `triaged` are kept
   /// only when the new type still allows them (dropped, not remapped, if the
   /// old value isn't one of [newSpec.secondaryTypes]). A few types carry
-  /// fields outside [NoteTypeSpec.fields] by design (see the primaryType
-  /// switch below and the `log`/`flashcard` entries in note_type_spec.dart)
-  /// — those are preserved/stamped the same way.
+  /// fields outside [NoteTypeSpec.fields] by design (see the
+  /// `milestone`/`flashcard` entries in note_type_spec.dart and
+  /// [_extraKeysOutsideFields]) — those are preserved the same way.
   Future<void> changePrimaryType({required String filename, required NoteTypeSpec newSpec}) async {
     final index = await future;
     final note = index.entries[filename];
@@ -201,9 +181,6 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
     }
     for (final field in newSpec.fields) {
       updated[field.key] ??= '';
-    }
-    if (newSpec.primaryType == 'log') {
-      updated['createdAt'] ??= DateTime.now().toIso8601String();
     }
 
     await write(filename, updated);

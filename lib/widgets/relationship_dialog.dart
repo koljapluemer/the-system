@@ -8,52 +8,23 @@ import '../state/note_index_notifier.dart';
 /// `[label, filename]` relationship to the note at [filename]: its built-in
 /// similar-notes suggestions double as the search for an existing note to
 /// attach, and typing a new title falls back to creating one — restricted to
-/// [allowedPrimaryTypes] (defaults to every `showInLists` type when
-/// omitted), locked to a single type when only one is allowed. Either path
-/// writes the relationship and its reciprocal mirror (see
-/// [NoteIndexNotifier.attachRelationship]).
+/// [allowedPrimaryTypes] (defaults to every type when omitted), locked to a
+/// single type when only one is allowed. Either path writes the relationship
+/// and its reciprocal mirror (see [NoteIndexNotifier.attachRelationship]).
 ///
-/// When [fixedLabel] is given (the "Add Log" flow), the label is baked in
-/// and the reverse label defaults to "backlink" — no label fields are
-/// shown, so this pushes [AddScreen] directly. Otherwise the label/reverse
-/// label prompt is rendered inline on the same screen as the note picker
-/// (see [_RelationshipAddScreen]) rather than as a separate step — that
-/// screen owns the label controllers itself so they're disposed exactly
-/// when Flutter removes the route (after its pop transition finishes),
-/// instead of racing that transition from an external `dispose()` call.
+/// The label/reverse label prompt is rendered inline on the same screen as
+/// the note picker (see [_RelationshipAddScreen]) rather than as a separate
+/// step — that screen owns the label controllers itself so they're disposed
+/// exactly when Flutter removes the route (after its pop transition
+/// finishes), instead of racing that transition from an external
+/// `dispose()` call.
 Future<void> showRelationshipDialog(
   BuildContext context,
   WidgetRef ref, {
   required String filename,
-  String? fixedLabel,
   List<String>? allowedPrimaryTypes,
   required String dialogTitle,
 }) {
-  if (fixedLabel != null) {
-    Future<void> attach(String relatedFilename) =>
-        ref.read(noteIndexProvider.notifier).attachRelationship(
-              filename: filename,
-              label: fixedLabel,
-              relatedFilename: relatedFilename,
-            );
-
-    return Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AddScreen(
-          allowedTypes: allowedPrimaryTypes,
-          appBarTitle: dialogTitle,
-          showBackButton: true,
-          onSuggestionSelected: (ctx, ref, relatedFilename) async {
-            await attach(relatedFilename);
-            if (ctx.mounted) Navigator.pop(ctx);
-          },
-          onCreated: (ref, createdFilename) => attach(createdFilename),
-        ),
-      ),
-    );
-  }
-
   return Navigator.push(
     context,
     MaterialPageRoute(

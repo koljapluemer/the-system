@@ -28,11 +28,8 @@ class AddScreen extends ConsumerStatefulWidget {
   /// (dropdown disabled, no quick-select chips) — used by Lists (locked to
   /// that list's type) and single-type relationship adds. More than one
   /// entry leaves it open with [initialType] pre-selected. Defaults to every
-  /// [NoteTypeSpec.showInLists] `primaryType` (`null` — resolved at build
-  /// time from [noteTypeSpecs], so new types need no change here), excluding
-  /// relationship-only types like `log` that would otherwise be creatable
-  /// with nothing to attach to — those are only reachable by explicitly
-  /// passing `allowedTypes`, as the relationship dialog does.
+  /// `primaryType` (`null` — resolved at build time from [noteTypeSpecs], so
+  /// new types need no change here).
   final List<String>? allowedTypes;
 
   /// Pre-selected type; must be in [allowedTypes]. Defaults to the first
@@ -100,8 +97,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
   // layout swap in build(), which changes the widget tree's shape whenever
   // _suggestions flips between empty and non-empty.
   final _titleFieldKey = GlobalKey();
-  late final List<String> _allowedTypes = widget.allowedTypes ??
-      [for (final spec in noteTypeSpecs) if (spec.showInLists) spec.primaryType];
+  late final List<String> _allowedTypes =
+      widget.allowedTypes ?? [for (final spec in noteTypeSpecs) spec.primaryType];
   late String _primaryType = widget.initialType ?? _allowedTypes.first;
 
   /// The secondaryType picker's current value, when [_spec] has one to
@@ -175,14 +172,8 @@ class _AddScreenState extends ConsumerState<AddScreen> {
     });
   }
 
-  /// log needs an automatic `createdAt`, beyond what a generic title-only
-  /// create covers, so it goes through a dedicated method instead of
-  /// [NoteIndexNotifier.createFromSpec].
   Future<String> _createNote(String title) {
     final notifier = ref.read(noteIndexProvider.notifier);
-    if (_primaryType == 'log') {
-      return notifier.createLog(title: title);
-    }
     return notifier.createFromSpec(_spec, title: title, secondaryType: _secondaryType);
   }
 

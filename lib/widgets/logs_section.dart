@@ -3,53 +3,69 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../models/note_file.dart';
-import '../models/note_index.dart';
-import '../models/note_type_spec.dart';
-import '../screens/note_editor_navigation.dart';
-import 'relationship_dialog.dart';
+import '../state/note_index_notifier.dart';
 
-final _logNoteTypeSpec = noteTypeSpecs.firstWhere((s) => s.primaryType == 'log');
-
-/// Human-readable, minute-granularity formatting for a log's `createdAt`,
-/// per Flutter's recommended `intl` `DateFormat` approach rather than
-/// hand-rolled string formatting.
+/// Human-readable, minute-granularity formatting for a log entry's
+/// `createdAt`, per Flutter's recommended `intl` `DateFormat` approach
+/// rather than hand-rolled string formatting.
 final _timestampFormat = DateFormat.yMMMd().add_Hm();
 
-class _LogEntry {
-  final String filename;
-  final String title;
-  final DateTime? createdAt;
-
-  const _LogEntry({required this.filename, required this.title, required this.createdAt});
-}
-
-/// Expandable "Logs" section for note types that accumulate timestamped log
-/// entries (see [NoteTypeSpec.showLogs] — currently milestone): every
-/// related `log` note (relType `log`), newest first, plus an
-/// "Add Log" button that reuses the generic relationship-attach flow. New
-/// logs get their `createdAt` stamped automatically by
-/// [NoteIndexNotifier.createLog] (via [AddScreen]'s `log` special-case), not
-/// entered by hand.
-class LogsSection extends ConsumerWidget {
+/// Expandable "Logs" section for note types that accumulate timestamped
+/// free-text entries directly on themselves (see [NoteTypeSpec.showLogs] —
+/// currently milestone): the note's own `logs` array of `{content,
+/// createdAt}` objects, shown newest first, plus an inline field that
+/// appends a new entry stamped with the current moment.
+class LogsSection extends ConsumerStatefulWidget {
   final String filename;
   final NoteFile note;
-  final NoteIndex index;
 
-  const LogsSection({super.key, required this.filename, required this.note, required this.index});
+  const LogsSection({super.key, required this.filename, required this.note});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final entries = [
-      for (final rel in note.relList('rels'))
-        if (rel[0] == 'log' && index.entries[rel[1]] != null)
-          _LogEntry(
-            filename: rel[1],
-            title: index.entries[rel[1]]!['title'] as String? ?? rel[1],
-            createdAt: DateTime.tryParse(index.entries[rel[1]]!['createdAt'] as String? ?? ''),
-          ),
-    ]..sort((a, b) {
-        final aTime = a.createdAt;
-        final bTime = b.createdAt;
+  ConsumerState<LogsSection> createState() => _LogsSectionState();
+}
+
+class _LogsSectionState extends ConsumerState<LogsSection> {
+  final _addController = TextEditingController();
+
+  @override
+  void dispose() {
+    _addController.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, dynamic>> get _logs {
+    final value = widget.note['logs'];
+    return value is List
+        ? value.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList()
+        : [];
+  }
+
+  Future<void> _write(List<Map<String, dynamic>> logs) {
+    return ref
+        .read(noteIndexProvider.notifier)
+        .write(widget.filename, {...widget.note, 'logs': logs});
+  }
+
+  void _add() {
+    final text = _addController.text.trim();
+    if (text.isEmpty) return;
+    final entry = {'content': text, 'createdAt': DateTime.now().toIso8601String()};
+    _write([..._logs, entry]);
+    _addController.clear();
+  }
+
+  void _delete(int index) {
+    final updated = [..._logs]..removeAt(index);
+    _write(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = _logs.asMap().entries.toList()
+      ..sort((a, b) {
+        final aTime = DateTime.tryParse(a.value['createdAt'] as String? ?? '');
+        final bTime = DateTime.tryParse(b.value['createdAt'] as String? ?? '');
         if (aTime == null || bTime == null) return 0;
         return bTime.compareTo(aTime);
       });
@@ -72,31 +88,42 @@ class LogsSection extends ConsumerWidget {
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  title: Text(entry.title),
-                  subtitle: Text(
-                    entry.createdAt == null ? 'unknown time' : _timestampFormat.format(entry.createdAt!),
+                  title: Text(entry.value['content'] as String? ?? ''),
+                  subtitle: Text(_formatTimestamp(entry.value['createdAt'] as String?)),
+                  trailing: IconButton(
+                    tooltip: 'Delete',
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _delete(entry.key),
                   ),
-                  onTap: () => pushNoteEditor(context, spec: _logNoteTypeSpec, filename: entry.filename),
                 ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _addController,
+                        decoration: const InputDecoration(labelText: 'Add Log'),
+                        onSubmitted: (_) => _add(),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Add',
+                      icon: const Icon(Icons.add),
+                      onPressed: _add,
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.add_link),
-            label: const Text('Add Log'),
-            onPressed: () => showRelationshipDialog(
-              context,
-              ref,
-              filename: filename,
-              fixedLabel: 'log',
-              allowedPrimaryTypes: const ['log'],
-              dialogTitle: 'Add Log',
-            ),
           ),
         ),
       ],
     );
   }
+}
+
+String _formatTimestamp(String? iso) {
+  final parsed = iso == null ? null : DateTime.tryParse(iso);
+  return parsed == null ? 'unknown time' : _timestampFormat.format(parsed);
 }

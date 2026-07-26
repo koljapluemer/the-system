@@ -8,9 +8,9 @@ Internal checklist for adding a new note `primaryType`. Brief — for contributo
 - `lib/models/note_type_spec.dart` — add a `NoteTypeSpec` entry: `fields` (kept in sync
   with the schema properties above). Every type's Lists screen gets a "new note" FAB
   automatically (`NoteTypeListScreen` isn't gated by any flag) — if the type has state a
-  title-only `createFromSpec` create can't set up (e.g. `createdAt` needing to be
-  stamped at creation time), special-case creation there instead, the way the `log`
-  branch in `_AddScreenState._createNote` does.
+  title-only `createFromSpec` create can't set up (e.g. something needing a timestamp
+  stamped at creation time), special-case creation in `_AddScreenState._createNote`
+  instead.
 
 ## Must decide
 
@@ -21,7 +21,8 @@ Internal checklist for adding a new note `primaryType`. Brief — for contributo
   truly can't express (e.g. a form that isn't a flat set of fields). A bespoke screen
   bypasses `pushNoteEditor` entirely and any fields it manages itself should generally
   be left out of `NoteTypeSpec.fields`, since that list is what the generic form/detail
-  screen merges on save.
+  screen merges on save — the way `milestone`'s `logs` array and `flashcard`'s `fsrs`
+  data are.
 - **`secondaryTypes`**: does this type need a constrained sub-type (e.g. `milestone`'s
   `secondaryType` of `open`/`failed`/`soso`/etc.)? If so, add the allowed values to both
   the schema (an `enum` on that type's `secondaryType` property in `note_schema.json`) and
@@ -40,22 +41,16 @@ Internal checklist for adding a new note `primaryType`. Brief — for contributo
   `SecondaryTypeFilterNotifier`)? Mirror it in the schema as a `defaultVisible` array
   sibling next to that type's `secondaryType` `enum` (e.g. `milestone`'s
   `"defaultVisible": ["open"]`). Leave both the schema annotation and this Dart field
-  omitted/`[]` (the default) if every value should be visible by default — that's the
-  convention `project` uses, rather than redundantly listing every enum value.
+  omitted/`[]` (the default) if every value should be visible without filtering.
 - **Relationships**: nothing to do here — every primaryType automatically gets the
   generic "Add Relationship" button on `NoteDetailScreen` (free-text label, optional
   reverse label, any primaryType as target), with no per-type wiring needed.
-- **`showInLists`**: should this type appear in the Lists section on the home screen?
-  Defaults to `true` in both `note_schema.json` (a `showInLists` sibling of that
-  `oneOf` branch's `description`, annotation-only — not validated) and
-  `NoteTypeSpec`. Only set `false` if this type shouldn't be browsable from that
-  overview.
 
 ## Don't need to touch
 
 - `add_screen.dart` — its type dropdown iterates `noteTypeSpecs` directly, so new types
-  appear there automatically. Only special-case it (see the `log` branch in
-  `_AddScreenState._createNote`) if a title-only `createFromSpec` create wouldn't validate.
+  appear there automatically, and every type shows up in the Home Lists section the same
+  way.
 - `note_editor_navigation.dart`, `relationship_dialog.dart` — both generic over any
   `NoteTypeSpec`/relType already.
 - Any test file, unless the new type has validation edge cases worth covering in

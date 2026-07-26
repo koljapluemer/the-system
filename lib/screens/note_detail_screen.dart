@@ -135,12 +135,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
   /// single "Add Relationship" button that prompts for a label and an
   /// optional reverse label.
   Widget _relationshipsSection(BuildContext context, NoteFile note, NoteIndex index) {
-    // `log` rels get their own dedicated, chronologically-sorted display
-    // (see [LogsSection]) for types that opt into it, so they're left out
-    // here to avoid showing every log twice.
-    final rels = widget.spec.showLogs
-        ? note.relList('rels').where((r) => r[0] != 'log').toList()
-        : note.relList('rels');
+    final rels = note.relList('rels');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -286,7 +281,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (widget.spec.showLogs) ...[
-                    LogsSection(filename: widget.filename, note: note, index: index),
+                    LogsSection(filename: widget.filename, note: note),
                     const SizedBox(height: 16),
                   ],
                   _relationshipsSection(context, note, index),

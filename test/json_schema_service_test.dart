@@ -8,10 +8,10 @@ void main() {
   const service = JsonSchemaService();
 
   group('findInvalid', () {
-    test('accepts a well-formed story note with rels and triaged', () async {
+    test('accepts a well-formed activity note with rels and triaged', () async {
       final index = NoteIndex(entries: {
         'b.json': {
-          'primaryType': 'story',
+          'primaryType': 'activity',
           'title': 'B',
           'content': 'body text',
           'rels': [
@@ -27,7 +27,7 @@ void main() {
     test('accepts a rels entry with a third mirrorLabel element', () async {
       final index = NoteIndex(entries: {
         'b2.json': {
-          'primaryType': 'story',
+          'primaryType': 'activity',
           'title': 'B2',
           'content': 'body text',
           'rels': [
@@ -76,15 +76,13 @@ void main() {
       expect(result, contains('d.json'));
     });
 
-    test('accepts a well-formed log note', () async {
+    test('accepts a well-formed milestone note with logs entries', () async {
       final index = NoteIndex(entries: {
         'log1.json': {
-          'primaryType': 'log',
+          'primaryType': 'milestone',
           'title': 'Checked in',
-          'content': 'still going',
-          'createdAt': '2026-07-13T10:30:00.000',
-          'rels': [
-            ['seeAlso', 'other.json'],
+          'logs': [
+            {'content': 'still going', 'createdAt': '2026-07-13T10:30:00.000'},
           ],
         },
       });
@@ -92,9 +90,15 @@ void main() {
       expect(result, isNot(contains('log1.json')));
     });
 
-    test('flags a log note missing the required createdAt field', () async {
+    test('flags a milestone note with a log entry missing createdAt', () async {
       final index = NoteIndex(entries: {
-        'log2.json': {'primaryType': 'log', 'title': 'Checked in'},
+        'log2.json': {
+          'primaryType': 'milestone',
+          'title': 'Checked in',
+          'logs': [
+            {'content': 'still going'},
+          ],
+        },
       });
       final result = await service.findInvalid(index);
       expect(result, contains('log2.json'));
@@ -178,7 +182,7 @@ void main() {
     test('flags unexpected extra fields', () async {
       final index = NoteIndex(entries: {
         'f.json': {
-          'primaryType': 'story',
+          'primaryType': 'activity',
           'title': 'F',
           'content': 'body text',
           'unexpected': 'field',

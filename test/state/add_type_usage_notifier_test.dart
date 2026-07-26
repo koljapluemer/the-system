@@ -15,10 +15,10 @@ void main() {
     addTearDown(container.dispose);
 
     final notifier = container.read(addTypeUsageProvider.notifier);
-    notifier.recordAdd('story');
-    notifier.recordAdd('story');
-    notifier.recordAdd('question');
+    notifier.recordAdd('art');
+    notifier.recordAdd('art');
+    notifier.recordAdd('activity');
 
-    expect(container.read(addTypeUsageProvider), {'story': 2, 'question': 1});
+    expect(container.read(addTypeUsageProvider), {'art': 2, 'activity': 1});
   });
 }

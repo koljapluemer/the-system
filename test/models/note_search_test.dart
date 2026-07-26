@@ -4,11 +4,11 @@ import 'package:the_system/models/note_search.dart';
 
 void main() {
   final entries = <String, NoteFile>{
-    'skepticism.json': {'primaryType': 'story', 'title': 'Skepticism'},
-    'other-story.json': {'primaryType': 'story', 'title': 'Completely unrelated title'},
-    'project-note.json': {'primaryType': 'project', 'title': 'Skepticism'},
+    'skepticism.json': {'primaryType': 'art', 'title': 'Skepticism'},
+    'other-art.json': {'primaryType': 'art', 'title': 'Completely unrelated title'},
+    'milestone-note.json': {'primaryType': 'milestone', 'title': 'Skepticism'},
     'aliased.json': {
-      'primaryType': 'question',
+      'primaryType': 'activity',
       'title': 'Something else entirely',
       'aliases': ['Skepticism'],
     },
@@ -19,7 +19,7 @@ void main() {
     final matches = findSimilarNotes(
       notes,
       query: 'Skepticism',
-      allowedPrimaryTypes: ['story', 'project', 'question'],
+      allowedPrimaryTypes: ['art', 'milestone', 'activity'],
     );
 
     expect(matches.first.filename, 'skepticism.json');
@@ -29,7 +29,7 @@ void main() {
     final matches = findSimilarNotes(
       notes,
       query: 'Scepticism',
-      allowedPrimaryTypes: ['story'],
+      allowedPrimaryTypes: ['art'],
     );
 
     expect(matches.map((m) => m.filename), contains('skepticism.json'));
@@ -39,7 +39,7 @@ void main() {
     final matches = findSimilarNotes(
       notes,
       query: 'Skepticism',
-      allowedPrimaryTypes: ['question'],
+      allowedPrimaryTypes: ['activity'],
     );
 
     expect(matches.map((m) => m.filename), contains('aliased.json'));
@@ -49,31 +49,31 @@ void main() {
     final matches = findSimilarNotes(
       notes,
       query: 'Skepticism',
-      allowedPrimaryTypes: ['story'],
+      allowedPrimaryTypes: ['art'],
     );
 
-    expect(matches.map((m) => m.filename), isNot(contains('project-note.json')));
+    expect(matches.map((m) => m.filename), isNot(contains('milestone-note.json')));
   });
 
   test('unrelated titles are excluded', () {
     final matches = findSimilarNotes(
       notes,
       query: 'Skepticism',
-      allowedPrimaryTypes: ['story'],
+      allowedPrimaryTypes: ['art'],
     );
 
-    expect(matches.map((m) => m.filename), isNot(contains('other-story.json')));
+    expect(matches.map((m) => m.filename), isNot(contains('other-art.json')));
   });
 
   test('respects limit', () {
     final manyEntries = <String, NoteFile>{
-      for (var i = 0; i < 10; i++) 'note-$i.json': {'primaryType': 'story', 'title': 'Topic $i'},
+      for (var i = 0; i < 10; i++) 'note-$i.json': {'primaryType': 'art', 'title': 'Topic $i'},
     };
 
     final matches = findSimilarNotes(
       normalizeNotes(manyEntries),
       query: 'Topic',
-      allowedPrimaryTypes: ['story'],
+      allowedPrimaryTypes: ['art'],
       limit: 3,
     );
 
@@ -81,7 +81,7 @@ void main() {
   });
 
   test('empty query returns no matches', () {
-    final matches = findSimilarNotes(notes, query: '', allowedPrimaryTypes: ['story']);
+    final matches = findSimilarNotes(notes, query: '', allowedPrimaryTypes: ['art']);
     expect(matches, isEmpty);
   });
 }

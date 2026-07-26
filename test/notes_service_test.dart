@@ -24,10 +24,10 @@ void main() {
 
   group('scanNotes', () {
     test('yields decoded content for a well-formed note', () async {
-      await writeFixture('a.json', {'primaryType': 'story', 'title': 'A'});
+      await writeFixture('a.json', {'primaryType': 'activity', 'title': 'A'});
       final result = await service.scanNotes(tempDir.path).toList();
       final entry = result.firstWhere((r) => r.filename == 'a.json');
-      expect(entry.data, {'primaryType': 'story', 'title': 'A'});
+      expect(entry.data, {'primaryType': 'activity', 'title': 'A'});
     });
 
     test('yields every file regardless of primaryType', () async {
@@ -59,7 +59,7 @@ void main() {
     test('finds every file across multiple concurrency batches, none dropped', () async {
       const total = 90;
       for (var i = 0; i < total; i++) {
-        await writeFixture('n$i.json', {'primaryType': 'story', 'title': 'N$i'});
+        await writeFixture('n$i.json', {'primaryType': 'activity', 'title': 'N$i'});
       }
       // concurrency (32) doesn't evenly divide total, exercising a partial final batch too.
       final result = await service.scanNotes(tempDir.path, concurrency: 32).toList();
@@ -73,7 +73,7 @@ void main() {
 
   group('writeJsonFile', () {
     test('writes triaged as the literal string "true", not a boolean', () async {
-      await writeFixture('d.json', {'primaryType': 'story'});
+      await writeFixture('d.json', {'primaryType': 'activity'});
       final note = await service.readJsonFile(tempDir.path, 'd.json');
       await service.writeJsonFile(tempDir.path, 'd.json', {...note, 'triaged': 'true'});
 
@@ -87,7 +87,7 @@ void main() {
       final rels = [
         ['source', 'some-file.json'],
       ];
-      await writeFixture('e.json', {'primaryType': 'story', 'rels': rels});
+      await writeFixture('e.json', {'primaryType': 'activity', 'rels': rels});
       final note = await service.readJsonFile(tempDir.path, 'e.json');
       await service.writeJsonFile(tempDir.path, 'e.json', {...note, 'triaged': 'true'});
 
@@ -101,7 +101,7 @@ void main() {
       final rels = [
         ['inspired by', 'some-file.json', 'inspires'],
       ];
-      await writeFixture('e2.json', {'primaryType': 'story', 'rels': rels});
+      await writeFixture('e2.json', {'primaryType': 'activity', 'rels': rels});
       final note = await service.readJsonFile(tempDir.path, 'e2.json');
       await service.writeJsonFile(tempDir.path, 'e2.json', {...note, 'triaged': 'true'});
 
@@ -136,18 +136,18 @@ void main() {
     test('truncates very long slugSource so the filename stays within OS limits', () async {
       final longTitle = List.filled(40, 'word').join(' '); // 199 chars
       final filename =
-          await service.createNote(tempDir.path, {'primaryType': 'story'}, slugSource: longTitle);
+          await service.createNote(tempDir.path, {'primaryType': 'activity'}, slugSource: longTitle);
       expect(filename.length, lessThan(100));
       expect(filename, matches(RegExp(r'^[a-z0-9-]+-[0-9a-z]{6}\.json$')));
       expect(filename.contains('--'), isFalse);
       final note = await service.readJsonFile(tempDir.path, filename);
-      expect(note['primaryType'], 'story');
+      expect(note['primaryType'], 'activity');
     });
   });
 
   group('deleteJsonFile', () {
     test('removes the file from disk', () async {
-      await writeFixture('f.json', {'primaryType': 'story'});
+      await writeFixture('f.json', {'primaryType': 'activity'});
       await service.deleteJsonFile(tempDir.path, 'f.json');
       expect(await File('${tempDir.path}/f.json').exists(), isFalse);
     });

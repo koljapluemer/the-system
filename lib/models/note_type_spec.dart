@@ -46,15 +46,11 @@ class NoteTypeSpec {
   /// when [secondaryTypes] is non-empty.
   String get defaultSecondaryType => secondaryTypes.first;
 
-  /// Whether this primaryType appears in the Lists section on the home
-  /// screen, mirrored in this primaryType's `showInLists` in
-  /// `note_schema.json`. True by default.
-  final bool showInLists;
-
   /// Whether this type's view screen renders a dedicated expandable "Logs"
-  /// section (see `lib/widgets/logs_section.dart`): every related `log`
-  /// note (relationship label `log`), newest first, plus an "Add Log"
-  /// button. False by default — opt in per type.
+  /// section (see `lib/widgets/logs_section.dart`): the note's own `logs`
+  /// array (`{content, createdAt}` entries, kept outside [fields] the same
+  /// way `flashcard`'s `fsrs` is), newest first, plus an inline "Add Log"
+  /// field. False by default — opt in per type.
   final bool showLogs;
 
   const NoteTypeSpec({
@@ -63,7 +59,6 @@ class NoteTypeSpec {
     required this.fields,
     this.secondaryTypes = const [],
     this.defaultVisibleSecondaryTypes = const [],
-    this.showInLists = true,
     this.showLogs = false,
   });
 }
@@ -84,55 +79,6 @@ const noteTypeSpecs = [
     secondaryTypes: ['open', 'failed', 'soso', 'success'],
     defaultVisibleSecondaryTypes: ['open'],
     showLogs: true,
-    fields: [
-      NoteFieldSpec(key: 'title', label: 'Title', required: true),
-      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
-    ],
-  ),
-  // Never browsed as its own list (showInLists: false) and never created via
-  // the generic title-only createFromSpec — `createdAt` needs to be stamped
-  // at creation time, so it goes through NoteIndexNotifier.createLog instead
-  // (see the `log` branch in `_AddScreenState._createNote`). Always created
-  // attached to a milestone via the relationship flow (see that spec's `log`
-  // relationship and `lib/widgets/logs_section.dart`), never standalone.
-  NoteTypeSpec(
-    primaryType: 'log',
-    label: 'Log',
-    showInLists: false,
-    fields: [
-      NoteFieldSpec(key: 'title', label: 'Title', required: true),
-      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
-    ],
-  ),
-  NoteTypeSpec(
-    primaryType: 'story',
-    label: 'Story',
-    fields: [
-      NoteFieldSpec(key: 'title', label: 'Title', required: true),
-      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
-    ],
-  ),
-  NoteTypeSpec(
-    primaryType: 'question',
-    label: 'Question',
-    fields: [
-      NoteFieldSpec(key: 'title', label: 'Title', required: true),
-      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
-    ],
-  ),
-  NoteTypeSpec(
-    primaryType: 'project',
-    label: 'Project',
-    secondaryTypes: ['idea', 'active', 'abandoned', 'frozen'],
-    fields: [
-      NoteFieldSpec(key: 'title', label: 'Title', required: true),
-      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
-    ],
-  ),
-  NoteTypeSpec(
-    primaryType: 'do',
-    label: 'Do',
-    secondaryTypes: ['idea', 'started', 'done', 'wont'],
     fields: [
       NoteFieldSpec(key: 'title', label: 'Title', required: true),
       NoteFieldSpec(key: 'content', label: 'Content', multiline: true),

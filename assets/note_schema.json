@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, story, log, flashcard, project, do, activity, or question.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, flashcard, or activity.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -34,8 +34,7 @@
   },
   "oneOf": [
     {
-      "description": "Art Triage notes.",
-      "showInLists": true,
+      "description": "Art notes.",
       "type": "object",
       "properties": {
         "primaryType": { "const": "art" },
@@ -52,7 +51,6 @@
     },
     {
       "description": "Milestone notes: a status marker (open, failed, or soso) with a free-text description.",
-      "showInLists": true,
       "type": "object",
       "properties": {
         "primaryType": { "const": "milestone" },
@@ -64,97 +62,21 @@
           "enum": ["open", "failed", "soso", "success"],
           "defaultVisible": ["open"]
         },
-        "rels": { "$ref": "#/definitions/rels" },
-        "extraData": { "$ref": "#/definitions/extraData" },
-        "triaged": { "$ref": "#/definitions/triaged" }
-      },
-      "required": ["primaryType", "title"],
-      "additionalProperties": false
-    },
-    {
-      "description": "Log notes: a timestamped free-text entry attached to a milestone.",
-      "showInLists": false,
-      "type": "object",
-      "properties": {
-        "primaryType": { "const": "log" },
-        "title": { "type": "string" },
-        "aliases": { "$ref": "#/definitions/aliases" },
-        "content": { "type": "string" },
-        "createdAt": {
-          "description": "ISO 8601 timestamp stamped automatically at creation.",
-          "type": "string"
-        },
-        "rels": { "$ref": "#/definitions/rels" },
-        "extraData": { "$ref": "#/definitions/extraData" },
-        "triaged": { "$ref": "#/definitions/triaged" }
-      },
-      "required": ["primaryType", "title", "createdAt"],
-      "additionalProperties": false
-    },
-    {
-      "description": "Story notes: a narrative account worth keeping.",
-      "showInLists": true,
-      "type": "object",
-      "properties": {
-        "primaryType": { "const": "story" },
-        "title": { "type": "string" },
-        "aliases": { "$ref": "#/definitions/aliases" },
-        "content": { "type": "string" },
-        "rels": { "$ref": "#/definitions/rels" },
-        "extraData": { "$ref": "#/definitions/extraData" },
-        "triaged": { "$ref": "#/definitions/triaged" }
-      },
-      "required": ["primaryType", "title"],
-      "additionalProperties": false
-    },
-    {
-      "description": "Question notes: an open question worth keeping track of.",
-      "showInLists": true,
-      "type": "object",
-      "properties": {
-        "primaryType": { "const": "question" },
-        "title": { "type": "string" },
-        "aliases": { "$ref": "#/definitions/aliases" },
-        "content": { "type": "string" },
-        "rels": { "$ref": "#/definitions/rels" },
-        "extraData": { "$ref": "#/definitions/extraData" },
-        "triaged": { "$ref": "#/definitions/triaged" }
-      },
-      "required": ["primaryType", "title"],
-      "additionalProperties": false
-    },
-    {
-      "description": "Project notes: a project tracked by status.",
-      "showInLists": true,
-      "type": "object",
-      "properties": {
-        "primaryType": { "const": "project" },
-        "title": { "type": "string" },
-        "aliases": { "$ref": "#/definitions/aliases" },
-        "content": { "type": "string" },
-        "secondaryType": {
-          "type": "string",
-          "enum": ["idea", "active", "abandoned", "frozen"]
-        },
-        "rels": { "$ref": "#/definitions/rels" },
-        "extraData": { "$ref": "#/definitions/extraData" },
-        "triaged": { "$ref": "#/definitions/triaged" }
-      },
-      "required": ["primaryType", "title"],
-      "additionalProperties": false
-    },
-    {
-      "description": "Do notes: an actionable item tracked by status.",
-      "showInLists": true,
-      "type": "object",
-      "properties": {
-        "primaryType": { "const": "do" },
-        "title": { "type": "string" },
-        "aliases": { "$ref": "#/definitions/aliases" },
-        "content": { "type": "string" },
-        "secondaryType": {
-          "type": "string",
-          "enum": ["idea", "started", "done", "wont"]
+        "logs": {
+          "description": "Timestamped free-text log entries kept directly on the milestone, newest first in the UI regardless of array order. Added/removed via the milestone's Logs section.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "content": { "type": "string" },
+              "createdAt": {
+                "description": "ISO 8601 timestamp stamped automatically when the entry is added.",
+                "type": "string"
+              }
+            },
+            "required": ["content", "createdAt"],
+            "additionalProperties": false
+          }
         },
         "rels": { "$ref": "#/definitions/rels" },
         "extraData": { "$ref": "#/definitions/extraData" },
@@ -165,7 +87,6 @@
     },
     {
       "description": "Activity notes: a logged activity worth keeping track of.",
-      "showInLists": true,
       "type": "object",
       "properties": {
         "primaryType": { "const": "activity" },
@@ -181,7 +102,6 @@
     },
     {
       "description": "Flashcard notes: a front/back pair reviewed by the Memorize flow using FSRS spaced-repetition scheduling.",
-      "showInLists": true,
       "type": "object",
       "properties": {
         "primaryType": { "const": "flashcard" },

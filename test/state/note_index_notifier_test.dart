@@ -42,11 +42,11 @@ void main() {
   }
 
   test('build scans the folder into entries and unparsable', () async {
-    await writeFixture('a.json', {'primaryType': 'story', 'title': 'A'});
+    await writeFixture('a.json', {'primaryType': 'activity', 'title': 'A'});
     await File('${tempDir.path}/broken.json').writeAsString('{not json');
 
     final index = await container.read(noteIndexProvider.future);
-    expect(index.entries['a.json'], {'primaryType': 'story', 'title': 'A'});
+    expect(index.entries['a.json'], {'primaryType': 'activity', 'title': 'A'});
     expect(index.unparsable, contains('broken.json'));
   });
 
@@ -54,17 +54,17 @@ void main() {
     await container.read(noteIndexProvider.future);
     await container
         .read(noteIndexProvider.notifier)
-        .write('new.json', {'primaryType': 'story', 'title': 'New'});
+        .write('new.json', {'primaryType': 'activity', 'title': 'New'});
 
     final index = container.read(noteIndexProvider).value!;
-    expect(index.entries['new.json'], {'primaryType': 'story', 'title': 'New'});
+    expect(index.entries['new.json'], {'primaryType': 'activity', 'title': 'New'});
 
     final onDisk = jsonDecode(await File('${tempDir.path}/new.json').readAsString());
     expect(onDisk['title'], 'New');
   });
 
   test('delete removes both the in-memory entry and the file on disk', () async {
-    await writeFixture('gone.json', {'primaryType': 'story', 'title': 'Gone'});
+    await writeFixture('gone.json', {'primaryType': 'activity', 'title': 'Gone'});
     await container.read(noteIndexProvider.future);
 
     await container.read(noteIndexProvider.notifier).delete('gone.json');
@@ -95,8 +95,8 @@ void main() {
 
   group('attachRelationship', () {
     test('writes both sides with an explicit reverse label', () async {
-      await writeFixture('a.json', {'primaryType': 'story', 'title': 'A'});
-      await writeFixture('b.json', {'primaryType': 'story', 'title': 'B'});
+      await writeFixture('a.json', {'primaryType': 'activity', 'title': 'A'});
+      await writeFixture('b.json', {'primaryType': 'activity', 'title': 'B'});
       await container.read(noteIndexProvider.future);
 
       await container.read(noteIndexProvider.notifier).attachRelationship(
@@ -116,8 +116,8 @@ void main() {
     });
 
     test('defaults the reverse label to "backlink" when omitted', () async {
-      await writeFixture('a.json', {'primaryType': 'story', 'title': 'A'});
-      await writeFixture('b.json', {'primaryType': 'story', 'title': 'B'});
+      await writeFixture('a.json', {'primaryType': 'activity', 'title': 'A'});
+      await writeFixture('b.json', {'primaryType': 'activity', 'title': 'B'});
       await container.read(noteIndexProvider.future);
 
       await container.read(noteIndexProvider.notifier).attachRelationship(
@@ -136,14 +136,14 @@ void main() {
   group('detachRelationship', () {
     test('removes both sides using the entry\'s recorded mirror label', () async {
       await writeFixture('a.json', {
-        'primaryType': 'story',
+        'primaryType': 'activity',
         'title': 'A',
         'rels': [
           ['inspired by', 'b.json', 'inspires'],
         ],
       });
       await writeFixture('b.json', {
-        'primaryType': 'story',
+        'primaryType': 'activity',
         'title': 'B',
         'rels': [
           ['inspires', 'a.json', 'inspired by'],
@@ -163,14 +163,14 @@ void main() {
 
     test('only detaches the local side for a legacy 2-element entry', () async {
       await writeFixture('a.json', {
-        'primaryType': 'story',
+        'primaryType': 'activity',
         'title': 'A',
         'rels': [
           ['inspired by', 'b.json'],
         ],
       });
       await writeFixture('b.json', {
-        'primaryType': 'story',
+        'primaryType': 'activity',
         'title': 'B',
         'rels': [
           ['inspires', 'a.json'],
