@@ -3,34 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 
 import '../state/memorize_notifier.dart';
+import '../widgets/art_triage_body.dart';
 import '../widgets/flashcard_card.dart';
-import 'art_triage_screen.dart';
 
-/// The spaced-repetition flashcard flow. Loads a random due (or, failing
-/// that, brand-new) `flashcard` note, reveals it on demand, and grades it
-/// with fsrs — with a 1/6 chance per turn of instead pushing the (otherwise
-/// standalone-retired) ArtTriageScreen as a break.
+/// The spaced-repetition flashcard flow: an infinite sequence of one-off
+/// turns, each independently 5/6 a flashcard reveal-and-grade and 1/6 a
+/// single art-triage keep/delete/defer decision (see [ArtTriageBody]).
+/// `_buildBody` is a pure function of [MemorizeState] dispatching on turn
+/// type ("flashcard", "art triage", "all caught up") — there is no
+/// imperative navigation or listener to keep in sync with it.
 class MemorizeScreen extends ConsumerWidget {
   const MemorizeScreen({super.key});
 
-  Future<void> _showArtTriage(BuildContext context, WidgetRef ref) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ArtTriageScreen()),
-    );
-    if (context.mounted) {
-      await ref.read(memorizeProvider.notifier).continueAfterArtTriage();
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<MemorizeState>(memorizeProvider, (previous, next) {
-      if (next.showArtTriage && previous?.showArtTriage != true) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _showArtTriage(context, ref));
-      }
-    });
-
     final state = ref.watch(memorizeProvider);
     final notifier = ref.read(memorizeProvider.notifier);
 
@@ -44,8 +30,12 @@ class MemorizeScreen extends ConsumerWidget {
   }
 
   Widget _buildBody(BuildContext context, MemorizeState state, MemorizeNotifier notifier) {
-    if (state.loading || state.showArtTriage) {
+    if (state.loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.showArtTriage) {
+      return ArtTriageBody(onDecided: notifier.continueAfterArtTriage);
     }
 
     if (state.currentNote == null) {

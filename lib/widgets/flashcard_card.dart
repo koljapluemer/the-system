@@ -7,7 +7,7 @@ import '../screens/note_editor_navigation.dart';
 
 /// Renders one flashcard for the Memorize flow: front (and, once revealed,
 /// a separator plus back) as markdown, with small top-right icon buttons to
-/// jump to its edit view or delete it — mirroring art_triage_screen.dart's
+/// jump to its edit view or delete it — mirroring art_triage_body.dart's
 /// Card layout/max-width convention and note_detail_screen.dart's
 /// trailing-icon-row convention.
 class FlashcardCard extends StatelessWidget {
