@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/frog_state_service.dart';
 import '../services/json_schema_service.dart';
 import '../services/note_search_worker.dart';
 import '../services/notes_service.dart';
@@ -23,6 +24,9 @@ final jsonSchemaServiceProvider =
     Provider<JsonSchemaService>((ref) => const JsonSchemaService());
 
 final settingsServiceProvider = Provider<SettingsService>((ref) => const SettingsService());
+
+final frogStateServiceProvider =
+    Provider<FrogStateService>((ref) => const FrogStateService());
 
 final storagePermissionServiceProvider =
     Provider<StoragePermissionService>((ref) => const StoragePermissionService());

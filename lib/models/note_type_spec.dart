@@ -126,4 +126,11 @@ const noteTypeSpecs = [
       NoteFieldSpec(key: 'interval', label: 'Interval (days)'),
     ],
   ),
+  NoteTypeSpec(
+    primaryType: 'frog',
+    label: 'Frog',
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Title', required: true),
+    ],
+  ),
 ];
