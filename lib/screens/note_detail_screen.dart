@@ -6,6 +6,7 @@ import '../models/note_index.dart';
 import '../models/note_type_spec.dart';
 import '../state/note_index_notifier.dart';
 import '../state/secondary_type_session.dart';
+import '../widgets/answers_section.dart';
 import '../widgets/array_list_section.dart';
 import '../widgets/change_type_dialog.dart';
 import '../widgets/inline_editable_text.dart';
@@ -282,6 +283,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
                   const SizedBox(height: 16),
                   if (widget.spec.showLogs) ...[
                     LogsSection(filename: widget.filename, note: note),
+                    const SizedBox(height: 16),
+                  ],
+                  if (widget.spec.showAnswers) ...[
+                    AnswersSection(filename: widget.filename, note: note),
                     const SizedBox(height: 16),
                   ],
                   _relationshipsSection(context, note, index),

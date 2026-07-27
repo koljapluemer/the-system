@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/recent_history_notifier.dart';
 import 'memorize_screen.dart';
+import 'prompt_screen.dart';
 import 'search_screen.dart';
 
 /// Describes one top-level flow, reachable from [HomeScreen]'s link list and
@@ -29,6 +30,12 @@ final flowSpecs = [
     label: 'Memorize',
     icon: Icons.school_outlined,
     builder: (_) => const MemorizeScreen(),
+  ),
+  FlowSpec(
+    id: 'prompts',
+    label: 'Prompts',
+    icon: Icons.chat_bubble_outline,
+    builder: (_) => const PromptScreen(),
   ),
   FlowSpec(
     id: 'search',

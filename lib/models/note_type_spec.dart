@@ -53,6 +53,15 @@ class NoteTypeSpec {
   /// field. False by default — opt in per type.
   final bool showLogs;
 
+  /// Whether this type's view screen renders a read-only expandable
+  /// "Answers" section (see `lib/widgets/answers_section.dart`): the note's
+  /// own `answers` array (`{text, createdAt}` entries, kept outside [fields]
+  /// the same way `flashcard`'s `fsrs` is), newest first. Unlike [showLogs],
+  /// there's no inline "add" control — an answer is only ever recorded by
+  /// completing the Prompts flow, which also stamps `lastShownAt`. False by
+  /// default — opt in per type.
+  final bool showAnswers;
+
   const NoteTypeSpec({
     required this.primaryType,
     required this.label,
@@ -60,6 +69,7 @@ class NoteTypeSpec {
     this.secondaryTypes = const [],
     this.defaultVisibleSecondaryTypes = const [],
     this.showLogs = false,
+    this.showAnswers = false,
   });
 }
 
@@ -102,6 +112,18 @@ const noteTypeSpecs = [
       NoteFieldSpec(key: 'title', label: 'Title', required: true),
       NoteFieldSpec(key: 'front', label: 'Front', multiline: true, required: true),
       NoteFieldSpec(key: 'back', label: 'Back', multiline: true, required: true),
+    ],
+  ),
+  // lastShownAt/answers (see lib/services/prompt_service.dart) are
+  // deliberately left out of `fields` — they're managed by the Prompts flow
+  // directly, not the generic merge-on-save.
+  NoteTypeSpec(
+    primaryType: 'prompt',
+    label: 'Prompt',
+    showAnswers: true,
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Prompt', multiline: true, required: true),
+      NoteFieldSpec(key: 'interval', label: 'Interval (days)'),
     ],
   ),
 ];

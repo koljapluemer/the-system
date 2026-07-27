@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, flashcard, or activity.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, or prompt.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -117,6 +117,40 @@
         "extraData": { "$ref": "#/definitions/extraData" }
       },
       "required": ["primaryType", "title", "front", "back"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Prompt notes: a free-text question re-asked on a fixed day interval, answered via the Prompts flow.",
+      "type": "object",
+      "properties": {
+        "primaryType": { "const": "prompt" },
+        "title": { "type": "string" },
+        "aliases": { "$ref": "#/definitions/aliases" },
+        "interval": {
+          "description": "Days between re-asking this prompt. Parsed leniently by lib/services/prompt_service.dart; missing/invalid treated as 1.",
+          "type": "string"
+        },
+        "lastShownAt": {
+          "description": "ISO 8601 timestamp of the last recorded answer, stamped by the Prompts flow. Absent until first answered.",
+          "type": ["string", "null"]
+        },
+        "answers": {
+          "description": "Timestamped free-text answers recorded by the Prompts flow, newest first in the UI regardless of array order.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "createdAt": { "type": "string" }
+            },
+            "required": ["text", "createdAt"],
+            "additionalProperties": false
+          }
+        },
+        "rels": { "$ref": "#/definitions/rels" },
+        "extraData": { "$ref": "#/definitions/extraData" }
+      },
+      "required": ["primaryType", "title"],
       "additionalProperties": false
     }
   ]

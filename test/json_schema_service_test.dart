@@ -165,6 +165,56 @@ void main() {
       expect(result, contains('fc4.json'));
     });
 
+    test('accepts a well-formed new prompt note with no interval/answers yet', () async {
+      final index = NoteIndex(entries: {
+        'p1.json': {'primaryType': 'prompt', 'title': 'Did you stretch today?'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('p1.json')));
+    });
+
+    test('accepts a well-formed prompt note with interval, lastShownAt, and answers', () async {
+      final index = NoteIndex(entries: {
+        'p2.json': {
+          'primaryType': 'prompt',
+          'title': 'Did you stretch today?',
+          'interval': '3',
+          'lastShownAt': '2026-07-20T10:30:00.000Z',
+          'answers': [
+            {'text': 'yes', 'createdAt': '2026-07-20T10:30:00.000Z'},
+          ],
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('p2.json')));
+    });
+
+    test('flags a prompt note with an answer entry missing createdAt', () async {
+      final index = NoteIndex(entries: {
+        'p3.json': {
+          'primaryType': 'prompt',
+          'title': 'Did you stretch today?',
+          'answers': [
+            {'text': 'yes'},
+          ],
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('p3.json'));
+    });
+
+    test('flags a prompt note with unexpected extra fields', () async {
+      final index = NoteIndex(entries: {
+        'p4.json': {
+          'primaryType': 'prompt',
+          'title': 'Did you stretch today?',
+          'unexpected': 'field',
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('p4.json'));
+    });
+
     test('flags an unknown primaryType', () async {
       final index = NoteIndex(entries: {
         'e.json': {'primaryType': 'contact', 'title': 'E'},

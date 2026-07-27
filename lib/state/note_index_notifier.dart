@@ -14,6 +14,7 @@ import 'providers.dart';
 const _extraKeysOutsideFields = <String, List<String>>{
   'milestone': ['logs'],
   'flashcard': ['fsrs'],
+  'prompt': ['answers', 'lastShownAt'],
 };
 
 /// The app-wide cache of every note in the data folder. Built once per
@@ -166,7 +167,7 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
 
     final allowedKeys = {
       'primaryType', 'title', 'aliases', 'rels', 'extraData',
-      if (newSpec.primaryType != 'flashcard') 'triaged',
+      if (!{'flashcard', 'prompt'}.contains(newSpec.primaryType)) 'triaged',
       if (newSpec.secondaryTypes.isNotEmpty) 'secondaryType',
       for (final field in newSpec.fields) field.key,
       ...?_extraKeysOutsideFields[newSpec.primaryType],
