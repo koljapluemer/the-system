@@ -126,4 +126,14 @@ const noteTypeSpecs = [
       NoteFieldSpec(key: 'interval', label: 'Interval (days)'),
     ],
   ),
+  // createdAt (see lib/state/note_index_notifier.dart's createBlock) is
+  // deliberately left out of `fields` — it's stamped once at creation by the
+  // Make a Block flow, not managed via the generic merge-on-save.
+  NoteTypeSpec(
+    primaryType: 'block',
+    label: 'Block',
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Task', required: true),
+    ],
+  ),
 ];

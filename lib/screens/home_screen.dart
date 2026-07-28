@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'add_screen.dart';
+import 'blocks_stats_screen.dart';
 import 'flow_navigation.dart';
 import 'folder_setup_screen.dart';
 import 'invalid_json_screen.dart';
@@ -86,6 +87,19 @@ class HomeScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => NoteTypeListScreen(spec: spec)),
               ),
             ),
+          const Divider(height: 1),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text('Stats'),
+          ),
+          ListTile(
+            title: const Text('Blocks'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BlocksStatsScreen()),
+            ),
+          ),
           const Divider(height: 1),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 4),

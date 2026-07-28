@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/recent_history_notifier.dart';
+import 'block_screen.dart';
 import 'memorize_screen.dart';
 import 'prompt_screen.dart';
 import 'search_screen.dart';
@@ -42,6 +43,12 @@ final flowSpecs = [
     label: 'Search',
     icon: Icons.search,
     builder: (_) => const SearchScreen(),
+  ),
+  FlowSpec(
+    id: 'block',
+    label: 'Make a Block',
+    icon: Icons.timer_outlined,
+    builder: (_) => const BlockScreen(),
   ),
 ];
 

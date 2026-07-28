@@ -215,6 +215,39 @@ void main() {
       expect(result, contains('p4.json'));
     });
 
+    test('accepts a well-formed block note', () async {
+      final index = NoteIndex(entries: {
+        'blk1.json': {
+          'primaryType': 'block',
+          'title': 'Write the report',
+          'createdAt': '2026-07-28T10:30:00.000Z',
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('blk1.json')));
+    });
+
+    test('flags a block note missing the required createdAt field', () async {
+      final index = NoteIndex(entries: {
+        'blk2.json': {'primaryType': 'block', 'title': 'Write the report'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('blk2.json'));
+    });
+
+    test('flags a block note with unexpected extra fields', () async {
+      final index = NoteIndex(entries: {
+        'blk3.json': {
+          'primaryType': 'block',
+          'title': 'Write the report',
+          'createdAt': '2026-07-28T10:30:00.000Z',
+          'unexpected': 'field',
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('blk3.json'));
+    });
+
     test('flags an unknown primaryType', () async {
       final index = NoteIndex(entries: {
         'e.json': {'primaryType': 'contact', 'title': 'E'},

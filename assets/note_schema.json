@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, or prompt.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, or block.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -151,6 +151,24 @@
         "extraData": { "$ref": "#/definitions/extraData" }
       },
       "required": ["primaryType", "title"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Block notes: a completed 25-minute focus block on a task, created by the Make a Block flow.",
+      "type": "object",
+      "properties": {
+        "primaryType": { "const": "block" },
+        "title": { "type": "string" },
+        "aliases": { "$ref": "#/definitions/aliases" },
+        "createdAt": {
+          "description": "ISO 8601 timestamp stamped automatically when the block is created, used to group blocks by calendar day on the Stats screen.",
+          "type": "string"
+        },
+        "rels": { "$ref": "#/definitions/rels" },
+        "extraData": { "$ref": "#/definitions/extraData" },
+        "triaged": { "$ref": "#/definitions/triaged" }
+      },
+      "required": ["primaryType", "title", "createdAt"],
       "additionalProperties": false
     }
   ]

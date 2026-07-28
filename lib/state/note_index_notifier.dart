@@ -15,6 +15,7 @@ const _extraKeysOutsideFields = <String, List<String>>{
   'milestone': ['logs'],
   'flashcard': ['fsrs'],
   'prompt': ['answers', 'lastShownAt'],
+  'block': ['createdAt'],
 };
 
 /// The app-wide cache of every note in the data folder. Built once per
@@ -137,6 +138,22 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
     if (secondaryType != null) content['secondaryType'] = secondaryType;
     final filename =
         await ref.read(notesServiceProvider).createNote(folder, content, slugSource: title);
+    await update((index) => index.copyWith(entries: {...index.entries, filename: content}));
+    return filename;
+  }
+
+  /// Creates a new `block` note for [task] with `createdAt` stamped to now,
+  /// for the Make a Block flow. Bespoke rather than [createFromSpec] because
+  /// a block needs a real timestamp at creation time, not an empty string.
+  Future<String> createBlock(String task) async {
+    final folder = (await ref.read(dataFolderProvider.future))!;
+    final content = <String, dynamic>{
+      'primaryType': 'block',
+      'title': task,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    final filename =
+        await ref.read(notesServiceProvider).createNote(folder, content, slugSource: task);
     await update((index) => index.copyWith(entries: {...index.entries, filename: content}));
     return filename;
   }
