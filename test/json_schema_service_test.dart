@@ -248,6 +248,22 @@ void main() {
       expect(result, contains('blk3.json'));
     });
 
+    test('accepts a well-formed frog note', () async {
+      final index = NoteIndex(entries: {
+        'frog1.json': {'primaryType': 'frog', 'title': 'Call the dentist'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('frog1.json')));
+    });
+
+    test('flags a frog note missing the required title field', () async {
+      final index = NoteIndex(entries: {
+        'frog2.json': {'primaryType': 'frog'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('frog2.json'));
+    });
+
     test('flags an unknown primaryType', () async {
       final index = NoteIndex(entries: {
         'e.json': {'primaryType': 'contact', 'title': 'E'},

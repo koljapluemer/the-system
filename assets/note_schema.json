@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, or block.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, block, or frog.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -169,6 +169,20 @@
         "triaged": { "$ref": "#/definitions/triaged" }
       },
       "required": ["primaryType", "title", "createdAt"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Frog notes: one unpleasant task/habit in the daily pool, surfaced one at a time by the Frog flow.",
+      "type": "object",
+      "properties": {
+        "primaryType": { "const": "frog" },
+        "title": { "type": "string" },
+        "aliases": { "$ref": "#/definitions/aliases" },
+        "rels": { "$ref": "#/definitions/rels" },
+        "extraData": { "$ref": "#/definitions/extraData" },
+        "triaged": { "$ref": "#/definitions/triaged" }
+      },
+      "required": ["primaryType", "title"],
       "additionalProperties": false
     }
   ]

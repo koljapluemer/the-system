@@ -22,7 +22,11 @@ class MemorizeState {
   final bool revealed;
 
   /// True when this "turn" is an art-triage interstitial instead of a
-  /// flashcard — [currentNote] is null in that case.
+  /// flashcard — [currentNote] is null in that case. Rendered inline by
+  /// [MemorizeScreen] as a third turn type (alongside "flashcard" and "all
+  /// caught up"), purely as a function of this flag — no imperative
+  /// navigation involved, so there's nothing to lose track of across
+  /// consecutive art-triage turns.
   final bool showArtTriage;
 
   const MemorizeState({
@@ -90,13 +94,25 @@ class MemorizeNotifier extends Notifier<MemorizeState> {
     ];
   }
 
+  bool _hasArtNotes() {
+    final index = ref.read(noteIndexProvider).value;
+    if (index == null) return false;
+    return index.entries.values.any((n) => n['primaryType'] == 'art');
+  }
+
   Future<void> _loadNext(int generation) async {
     // Await the index once so the very first load (before noteIndexProvider
     // has resolved) doesn't race an empty snapshot.
     await ref.read(noteIndexProvider.future);
     if (!ref.mounted || generation != _generation) return;
 
-    if (_random.nextInt(6) == 0) {
+    // Every turn is independently 1/6 art-triage, 5/6 flashcard — gated on
+    // there being at least one art note so this can't roll into a dead end.
+    // A turn is exactly one decision: [ArtTriageBody] shows a single note
+    // and immediately calls back into this same _loadNext once the user
+    // keeps/deletes/defers it, so this branch can never chain into a second
+    // art note without an independent re-roll.
+    if (_hasArtNotes() && _random.nextInt(6) == 0) {
       state = state.copyWith(loading: false, showArtTriage: true, clearCurrent: true);
       return;
     }
@@ -111,19 +127,35 @@ class MemorizeNotifier extends Notifier<MemorizeState> {
     ];
     final fresh = [for (final e in entries) if (fsrs_service.isNewFlashcard(e.value)) e];
 
-    final rawPool = due.isNotEmpty ? due : fresh;
-    if (rawPool.isEmpty) {
+    if (due.isEmpty && fresh.isEmpty) {
       state = state.copyWith(loading: false, showArtTriage: false, clearCurrent: true);
       return;
     }
 
-    // Avoid immediately repeating the card just shown, unless it's the only
-    // candidate available.
-    final withoutLast = [for (final e in rawPool) if (e.key != _lastShownFilename) e];
-    final pool = withoutLast.isNotEmpty ? withoutLast : rawPool;
+    // Prefer due cards over new ones, but never repeat the card just shown
+    // if any other candidate exists anywhere in the flashcard pool — falling
+    // back from due to fresh (or vice versa) rather than re-showing it.
+    final dueWithoutLast = [for (final e in due) if (e.key != _lastShownFilename) e];
+    final freshWithoutLast = [for (final e in fresh) if (e.key != _lastShownFilename) e];
+
+    final List<MapEntry<String, NoteFile>> pool;
+    final bool isNew;
+    if (dueWithoutLast.isNotEmpty) {
+      pool = dueWithoutLast;
+      isNew = false;
+    } else if (freshWithoutLast.isNotEmpty) {
+      pool = freshWithoutLast;
+      isNew = true;
+    } else if (due.isNotEmpty) {
+      // Only candidate left anywhere is the card just shown — unavoidable.
+      pool = due;
+      isNew = false;
+    } else {
+      pool = fresh;
+      isNew = true;
+    }
 
     final picked = pool[_random.nextInt(pool.length)];
-    final isNew = due.isEmpty;
     _lastShownFilename = picked.key;
     state = state.copyWith(
       loading: false,
@@ -181,7 +213,9 @@ class MemorizeNotifier extends Notifier<MemorizeState> {
     await _loadNext(_generation);
   }
 
-  /// Resumes the flow after the pushed art-triage interstitial is popped.
+  /// Rolls the next turn after the current art-triage turn's single
+  /// keep/delete/defer decision has been made — the art-triage equivalent of
+  /// [rate]/[rememberNew] advancing after a flashcard's single grade.
   Future<void> continueAfterArtTriage() async {
     await _loadNext(_generation);
   }

@@ -136,4 +136,11 @@ const noteTypeSpecs = [
       NoteFieldSpec(key: 'title', label: 'Task', required: true),
     ],
   ),
+  NoteTypeSpec(
+    primaryType: 'frog',
+    label: 'Frog',
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Title', required: true),
+    ],
+  ),
 ];

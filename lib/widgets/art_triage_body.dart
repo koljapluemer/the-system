@@ -7,10 +7,22 @@ import 'package:path/path.dart' as p;
 
 import '../state/art_triage_notifier.dart';
 import '../state/providers.dart';
-import '../state/triage_notifier.dart';
 
-class ArtTriageScreen extends ConsumerWidget {
-  const ArtTriageScreen({super.key});
+/// Renders exactly one art-triage decision for the Memorize flow's "1/6 of
+/// turns are a triage break" mechanic. This is a single trial, symmetric
+/// with a flashcard turn: the user picks keep/delete/defer exactly once,
+/// and that single tap both acts on [artTriageProvider] (which manages its
+/// own queue) and calls [onDecided] to roll the *next* Memorize turn — never
+/// looping to show a second art note without an independent re-roll, and
+/// never needing a manual "done" exit.
+///
+/// [MemorizeNotifier] only shows this turn type when it has already
+/// confirmed at least one art note exists, so `currentNote == null` here is
+/// treated as a transient loading state, not a dead end.
+class ArtTriageBody extends ConsumerWidget {
+  final Future<void> Function() onDecided;
+
+  const ArtTriageBody({super.key, required this.onDecided});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -18,48 +30,8 @@ class ArtTriageScreen extends ConsumerWidget {
     final notifier = ref.read(artTriageProvider.notifier);
     final folder = ref.watch(dataFolderProvider).value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Art Triage'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: Text(
-                '${state.queue.length} remaining',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        minimum: const EdgeInsets.only(bottom: 88),
-        child: _buildBody(context, state, notifier, folder),
-      ),
-    );
-  }
-
-  Widget _buildBody(
-    BuildContext context,
-    TriageState state,
-    ArtTriageNotifier notifier,
-    String? folder,
-  ) {
-    if (state.loading) {
+    if (state.loading || state.currentNote == null) {
       return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.currentNote == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text(
-            'All caught up — no more art to triage.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
     }
 
     final note = state.currentNote!;
@@ -73,6 +45,10 @@ class ArtTriageScreen extends ConsumerWidget {
 
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: Text('Art triage', style: Theme.of(context).textTheme.bodySmall),
+        ),
         Expanded(
           child: Center(
             child: SingleChildScrollView(
@@ -119,7 +95,10 @@ class ArtTriageScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: notifier.keep,
+                    onPressed: () async {
+                      await notifier.keep();
+                      await onDecided();
+                    },
                     icon: const Icon(Icons.check),
                     label: const Text('Keep'),
                   ),
@@ -128,7 +107,10 @@ class ArtTriageScreen extends ConsumerWidget {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-                    onPressed: () => notifier.delete(context),
+                    onPressed: () async {
+                      await notifier.delete(context);
+                      await onDecided();
+                    },
                     icon: const Icon(Icons.delete),
                     label: const Text('Delete'),
                   ),
@@ -136,7 +118,10 @@ class ArtTriageScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: notifier.defer,
+                    onPressed: () async {
+                      await notifier.defer();
+                      await onDecided();
+                    },
                     icon: const Icon(Icons.skip_next),
                     label: const Text('Defer'),
                   ),
