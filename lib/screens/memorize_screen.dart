@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fsrs/fsrs.dart' as fsrs;
 
+import '../models/note_type_spec.dart';
 import '../state/memorize_notifier.dart';
 import '../widgets/flashcard_card.dart';
 import 'art_triage_screen.dart';
+import 'note_editor_navigation.dart';
 
 /// The spaced-repetition flashcard flow. Loads a random due (or, failing
 /// that, brand-new) `flashcard` note, reveals it on demand, and grades it
@@ -35,7 +37,27 @@ class MemorizeScreen extends ConsumerWidget {
     final notifier = ref.read(memorizeProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Memorize')),
+      appBar: AppBar(
+        title: const Text('Memorize'),
+        actions: state.currentNote == null
+            ? null
+            : [
+                IconButton(
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => pushNoteEditor(
+                    context,
+                    spec: noteTypeSpecs.firstWhere((s) => s.primaryType == 'flashcard'),
+                    filename: state.currentFilename!,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => notifier.deleteCurrent(context),
+                ),
+              ],
+      ),
       body: SafeArea(
         minimum: const EdgeInsets.only(bottom: 88),
         child: _buildBody(context, state, notifier),
@@ -63,11 +85,9 @@ class MemorizeScreen extends ConsumerWidget {
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-              child: FlashcardCard(
-                filename: state.currentFilename!,
-                note: state.currentNote!,
-                revealed: state.revealed,
-                onDelete: () => notifier.deleteCurrent(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: FlashcardCard(note: state.currentNote!, revealed: state.revealed),
               ),
             ),
           ),

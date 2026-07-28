@@ -2,68 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import '../models/note_file.dart';
-import '../models/note_type_spec.dart';
-import '../screens/note_editor_navigation.dart';
 
 /// Renders one flashcard for the Memorize flow: front (and, once revealed,
-/// a separator plus back) as markdown, with small top-right icon buttons to
-/// jump to its edit view or delete it — mirroring art_triage_screen.dart's
-/// Card layout/max-width convention and note_detail_screen.dart's
-/// trailing-icon-row convention.
+/// a thin rule plus back) as centered markdown, sized up since a card's
+/// content here is usually a single short line — no border or elevation, so
+/// the text reads as the screen rather than a box floating on it. Edit/
+/// delete live in the screen's AppBar instead of overlaid on the content.
 class FlashcardCard extends StatelessWidget {
-  final String filename;
   final NoteFile note;
   final bool revealed;
-  final VoidCallback onDelete;
 
-  const FlashcardCard({
-    super.key,
-    required this.filename,
-    required this.note,
-    required this.revealed,
-    required this.onDelete,
-  });
+  const FlashcardCard({super.key, required this.note, required this.revealed});
 
   @override
   Widget build(BuildContext context) {
     final front = note['front'] as String? ?? '';
     final back = note['back'] as String? ?? '';
-    final spec = noteTypeSpecs.firstWhere((s) => s.primaryType == 'flashcard');
+    final textTheme = Theme.of(context).textTheme;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 560),
-      child: Card(
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    tooltip: 'Edit',
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => pushNoteEditor(context, spec: spec, filename: filename),
-                  ),
-                  IconButton(
-                    tooltip: 'Delete',
-                    icon: const Icon(Icons.delete),
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              MarkdownBody(data: front),
-              if (revealed) ...[
-                const Divider(height: 32),
-                MarkdownBody(data: back),
-              ],
-            ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MarkdownBody(
+          data: front,
+          styleSheet: MarkdownStyleSheet(
+            p: textTheme.headlineSmall,
+            textAlign: WrapAlignment.center,
           ),
         ),
-      ),
+        if (revealed) ...[
+          const SizedBox(height: 32),
+          Container(width: 48, height: 1, color: Theme.of(context).dividerColor),
+          const SizedBox(height: 32),
+          MarkdownBody(
+            data: back,
+            styleSheet: MarkdownStyleSheet(
+              p: textTheme.titleMedium,
+              textAlign: WrapAlignment.center,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

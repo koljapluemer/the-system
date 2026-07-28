@@ -38,7 +38,27 @@ class _PromptScreenState extends ConsumerState<PromptScreen> {
     final notifier = ref.read(promptProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Prompts')),
+      appBar: AppBar(
+        title: const Text('Prompts'),
+        actions: state.currentNote == null
+            ? null
+            : [
+                IconButton(
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => pushNoteEditor(
+                    context,
+                    spec: noteTypeSpecs.firstWhere((s) => s.primaryType == 'prompt'),
+                    filename: state.currentFilename!,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => notifier.deleteCurrent(context),
+                ),
+              ],
+      ),
       body: SafeArea(
         minimum: const EdgeInsets.only(bottom: 88),
         child: _buildBody(context, state, notifier),
@@ -60,9 +80,7 @@ class _PromptScreenState extends ConsumerState<PromptScreen> {
       );
     }
 
-    final filename = state.currentFilename!;
     final note = state.currentNote!;
-    final spec = noteTypeSpecs.firstWhere((s) => s.primaryType == 'prompt');
 
     return Column(
       children: [
@@ -72,33 +90,11 @@ class _PromptScreenState extends ConsumerState<PromptScreen> {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              tooltip: 'Edit',
-                              icon: const Icon(Icons.edit),
-                              onPressed: () =>
-                                  pushNoteEditor(context, spec: spec, filename: filename),
-                            ),
-                            IconButton(
-                              tooltip: 'Delete',
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => notifier.deleteCurrent(context),
-                            ),
-                          ],
-                        ),
-                        MarkdownBody(data: note['title'] as String? ?? ''),
-                      ],
-                    ),
+                child: MarkdownBody(
+                  data: note['title'] as String? ?? '',
+                  styleSheet: MarkdownStyleSheet(
+                    p: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: WrapAlignment.center,
                   ),
                 ),
               ),
