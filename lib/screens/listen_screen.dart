@@ -50,6 +50,14 @@ class ListenScreen extends ConsumerWidget {
     );
   }
 
+  static const _actionLabels = {
+    ListenAction.next: 'Next',
+    ListenAction.hideForWeek: 'Hide for 1 Week',
+    ListenAction.hideForTwoMonths: 'Hide for 2 Months',
+    ListenAction.hideForYear: 'Hide for 1 Year',
+    ListenAction.neverListenAgain: 'Never Listen Again',
+  };
+
   Widget _buttonColumn(ListenNotifier notifier) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,7 +79,46 @@ class ListenScreen extends ConsumerWidget {
     );
   }
 
-  Widget _content(BuildContext context, ListenState state, String? folder) {
+  Widget _actionRadioGroup(ListenState state, ListenNotifier notifier) {
+    return RadioGroup<ListenAction>(
+      groupValue: state.selectedAction,
+      onChanged: (value) => value == null ? null : notifier.setSelectedAction(value),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final action in ListenAction.values)
+            RadioListTile<ListenAction>(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(_actionLabels[action]!),
+              value: action,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _controls(ListenState state, ListenNotifier notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Autoplay'),
+          value: state.autoplayEnabled,
+          onChanged: notifier.setAutoplayEnabled,
+        ),
+        const SizedBox(height: 4),
+        if (state.autoplayEnabled)
+          _actionRadioGroup(state, notifier)
+        else
+          _buttonColumn(notifier),
+      ],
+    );
+  }
+
+  Widget _content(BuildContext context, ListenState state, String? folder, ListenNotifier notifier) {
     if (state.loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -102,6 +149,7 @@ class ListenScreen extends ConsumerWidget {
               key: ValueKey(state.currentFilename),
               file: File(p.join(folder, 'audio', audioFile)),
               autoPlay: true,
+              onEnded: notifier.onAudioEnded,
             )
           else
             const Text('No audio file attached.'),
@@ -131,7 +179,7 @@ class ListenScreen extends ConsumerWidget {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 560),
-                  child: _content(context, state, folder),
+                  child: _content(context, state, folder, notifier),
                 ),
               ),
             ),
@@ -139,7 +187,7 @@ class ListenScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: _buttonColumn(notifier),
+                child: _controls(state, notifier),
               ),
             ),
           ],

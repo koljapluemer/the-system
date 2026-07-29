@@ -7,6 +7,11 @@ import '../services/audio_listen_service.dart';
 import 'note_index_notifier.dart';
 import 'providers.dart';
 
+/// The actions available for the just-played note once it finishes, when
+/// autoplay is driving the flow — one-to-one with the Listen flow's manual
+/// buttons.
+enum ListenAction { next, hideForWeek, hideForTwoMonths, hideForYear, neverListenAgain }
+
 class ListenState {
   final bool loading;
   final String? currentFilename;
@@ -21,6 +26,15 @@ class ListenState {
   final TagFilterMode tagFilterMode;
   final Set<String> filterTags;
 
+  /// Whether the just-played note's fate is decided automatically (per
+  /// [selectedAction]) when it ends, instead of waiting for a button tap.
+  /// In-memory only, like the rest of this state — resets on app restart.
+  final bool autoplayEnabled;
+
+  /// Which action fires on audio end while [autoplayEnabled] is true.
+  /// Persisted for the app session (not to disk) by living on this state.
+  final ListenAction selectedAction;
+
   const ListenState({
     this.loading = true,
     this.currentFilename,
@@ -28,6 +42,8 @@ class ListenState {
     this.allCaughtUp = false,
     this.tagFilterMode = TagFilterMode.or,
     this.filterTags = const {},
+    this.autoplayEnabled = false,
+    this.selectedAction = ListenAction.next,
   });
 
   ListenState copyWith({
@@ -37,6 +53,8 @@ class ListenState {
     bool? allCaughtUp,
     TagFilterMode? tagFilterMode,
     Set<String>? filterTags,
+    bool? autoplayEnabled,
+    ListenAction? selectedAction,
     bool clearCurrent = false,
   }) {
     return ListenState(
@@ -46,6 +64,8 @@ class ListenState {
       allCaughtUp: allCaughtUp ?? this.allCaughtUp,
       tagFilterMode: tagFilterMode ?? this.tagFilterMode,
       filterTags: filterTags ?? this.filterTags,
+      autoplayEnabled: autoplayEnabled ?? this.autoplayEnabled,
+      selectedAction: selectedAction ?? this.selectedAction,
     );
   }
 }
@@ -159,6 +179,33 @@ class ListenNotifier extends Notifier<ListenState> {
   void setTagFilterMode(TagFilterMode mode) => _applyFilterChange(state.copyWith(tagFilterMode: mode));
 
   void setFilterTags(Set<String> tags) => _applyFilterChange(state.copyWith(filterTags: tags));
+
+  void setAutoplayEnabled(bool enabled) => state = state.copyWith(autoplayEnabled: enabled);
+
+  void setSelectedAction(ListenAction action) => state = state.copyWith(selectedAction: action);
+
+  Future<void> performAction(ListenAction action) {
+    switch (action) {
+      case ListenAction.next:
+        return next();
+      case ListenAction.hideForWeek:
+        return hideForWeek();
+      case ListenAction.hideForTwoMonths:
+        return hideForTwoMonths();
+      case ListenAction.hideForYear:
+        return hideForYear();
+      case ListenAction.neverListenAgain:
+        return neverListenAgain();
+    }
+  }
+
+  /// Called when the current note's playback finishes. A no-op unless
+  /// autoplay is on, in which case it applies [ListenState.selectedAction]
+  /// to the just-played note and loads the next one.
+  Future<void> onAudioEnded() {
+    if (!state.autoplayEnabled) return Future.value();
+    return performAction(state.selectedAction);
+  }
 }
 
 final listenProvider = NotifierProvider<ListenNotifier, ListenState>(ListenNotifier.new);

@@ -19,8 +19,9 @@ String _formatDuration(Duration d) {
 class AudioPlayerWidget extends StatefulWidget {
   final File file;
   final bool autoPlay;
+  final VoidCallback? onEnded;
 
-  const AudioPlayerWidget({super.key, required this.file, this.autoPlay = false});
+  const AudioPlayerWidget({super.key, required this.file, this.autoPlay = false, this.onEnded});
 
   @override
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -35,6 +36,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   StreamSubscription<PlayerState>? _stateSub;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration>? _durationSub;
+  StreamSubscription<void>? _completeSub;
 
   @override
   void initState() {
@@ -47,6 +49,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     });
     _durationSub = _player.onDurationChanged.listen((duration) {
       if (mounted) setState(() => _duration = duration);
+    });
+    _completeSub = _player.onPlayerComplete.listen((_) {
+      widget.onEnded?.call();
     });
     _load(widget.file);
   }
@@ -73,6 +78,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _stateSub?.cancel();
     _positionSub?.cancel();
     _durationSub?.cancel();
+    _completeSub?.cancel();
     _player.dispose();
     super.dispose();
   }
