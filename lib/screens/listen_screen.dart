@@ -101,6 +101,7 @@ class ListenScreen extends ConsumerWidget {
             AudioPlayerWidget(
               key: ValueKey(state.currentFilename),
               file: File(p.join(folder, 'audio', audioFile)),
+              autoPlay: true,
             )
           else
             const Text('No audio file attached.'),

@@ -13,11 +13,14 @@ String _formatDuration(Duration d) {
 /// A minimal audio player: play/pause plus a draggable playback-position
 /// slider, for the Listen flow and the Audio File section's inline preview.
 /// Owns one [AudioPlayer] for [file]'s lifetime, loading a new source
-/// whenever [file] changes.
+/// whenever [file] changes. Loading only prepares the source — it never
+/// starts playback on its own unless [autoPlay] is set, so e.g. just opening
+/// a note's detail view doesn't start audio playing behind your back.
 class AudioPlayerWidget extends StatefulWidget {
   final File file;
+  final bool autoPlay;
 
-  const AudioPlayerWidget({super.key, required this.file});
+  const AudioPlayerWidget({super.key, required this.file, this.autoPlay = false});
 
   @override
   State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
@@ -59,7 +62,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   Future<void> _load(File file) async {
-    await _player.play(DeviceFileSource(file.path));
+    await _player.setSource(DeviceFileSource(file.path));
+    if (widget.autoPlay && mounted) {
+      await _player.resume();
+    }
   }
 
   @override
