@@ -62,6 +62,21 @@ class NoteTypeSpec {
   /// default — opt in per type.
   final bool showAnswers;
 
+  /// Whether this type's view screen renders a "Tags" section (see
+  /// `lib/widgets/tag_chip_input.dart`): the note's own `tags` array, edited
+  /// via a chip input that autocompletes against every other note of this
+  /// type's tags. Kept outside [fields] the same way `flashcard`'s `fsrs` is.
+  /// False by default — opt in per type.
+  final bool showTags;
+
+  /// Whether this type's view screen renders an "Audio File" section: the
+  /// note's own `audioFile` filename (resolved under a parallel `audio/`
+  /// folder in the data folder, mirroring `art`'s `image`/`media/`
+  /// convention), attached via a file picker rather than typed in directly.
+  /// Kept outside [fields] the same way `flashcard`'s `fsrs` is. False by
+  /// default — opt in per type.
+  final bool showAudioFile;
+
   const NoteTypeSpec({
     required this.primaryType,
     required this.label,
@@ -70,6 +85,8 @@ class NoteTypeSpec {
     this.defaultVisibleSecondaryTypes = const [],
     this.showLogs = false,
     this.showAnswers = false,
+    this.showTags = false,
+    this.showAudioFile = false,
   });
 }
 
@@ -141,6 +158,21 @@ const noteTypeSpecs = [
     label: 'Frog',
     fields: [
       NoteFieldSpec(key: 'title', label: 'Title', required: true),
+    ],
+  ),
+  // audioFile/tags/lastListenedAt/hiddenUntil/neverListen (see
+  // lib/services/audio_listen_service.dart and lib/state/listen_notifier.dart)
+  // are deliberately left out of `fields` — they're managed by the Attach
+  // Audio File/Tags sections and the Listen flow directly, not the generic
+  // merge-on-save.
+  NoteTypeSpec(
+    primaryType: 'audio',
+    label: 'Audio',
+    showTags: true,
+    showAudioFile: true,
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Title', required: true),
+      NoteFieldSpec(key: 'content', label: 'Content', multiline: true),
     ],
   ),
 ];

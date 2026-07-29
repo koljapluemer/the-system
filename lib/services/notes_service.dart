@@ -104,6 +104,32 @@ class NotesService {
     return filename;
   }
 
+  /// Copies [source] into `<folder>/<subfolder>/`, creating that folder if
+  /// needed, under a collision-safe generated filename that preserves
+  /// [source]'s extension. Used for the Attach Audio File action so imported
+  /// media lives in its own parallel folder (e.g. `audio/`), mirroring how
+  /// [createNote] generates a collision-safe name for note JSON files.
+  /// Throws an [ArgumentError] if [source]'s extension (case-insensitively)
+  /// isn't in [allowedExtensions] — the only place in this app that enforces
+  /// a file-format allowlist for attached media.
+  Future<String> importMediaFile({
+    required String folder,
+    required String subfolder,
+    required File source,
+    required List<String> allowedExtensions,
+  }) async {
+    final ext = p.extension(source.path).replaceFirst('.', '').toLowerCase();
+    if (!allowedExtensions.contains(ext)) {
+      throw ArgumentError('unsupported file extension: .$ext');
+    }
+    final dir = Directory(p.join(folder, subfolder));
+    await dir.create(recursive: true);
+    final filename =
+        '${_slugify(p.basenameWithoutExtension(source.path))}-${_randomSuffix6()}.$ext';
+    await source.copy(p.join(dir.path, filename));
+    return filename;
+  }
+
   /// Most filesystems cap a filename at 255 bytes; long titles (e.g. a story
   /// note whose title is a whole paragraph) would otherwise blow past that
   /// once slugified, so this is capped well under the limit even after the

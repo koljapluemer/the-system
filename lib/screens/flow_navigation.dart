@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/recent_history_notifier.dart';
 import 'block_screen.dart';
 import 'frog_screen.dart';
+import 'listen_screen.dart';
 import 'memorize_screen.dart';
 import 'prompt_screen.dart';
 import 'search_screen.dart';
@@ -56,6 +57,12 @@ final flowSpecs = [
     label: 'Frog',
     icon: Icons.pets,
     builder: (_) => const FrogScreen(),
+  ),
+  FlowSpec(
+    id: 'listen',
+    label: 'Listen',
+    icon: Icons.headphones,
+    builder: (_) => const ListenScreen(),
   ),
 ];
 

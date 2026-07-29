@@ -264,6 +264,51 @@ void main() {
       expect(result, contains('frog2.json'));
     });
 
+    test('accepts a well-formed audio note with tags and an audioFile', () async {
+      final index = NoteIndex(entries: {
+        'aud1.json': {
+          'primaryType': 'audio',
+          'title': 'Episode 42',
+          'content': 'Notes about the episode',
+          'audioFile': 'episode-42-ab12cd.mp3',
+          'tags': ['podcast', 'tech'],
+          'lastListenedAt': '2026-07-20T10:30:00.000Z',
+          'hiddenUntil': null,
+          'neverListen': false,
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('aud1.json')));
+    });
+
+    test('accepts a well-formed new audio note with none of the flow-managed fields yet', () async {
+      final index = NoteIndex(entries: {
+        'aud2.json': {'primaryType': 'audio', 'title': 'Episode 43'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('aud2.json')));
+    });
+
+    test('flags an audio note missing the required title field', () async {
+      final index = NoteIndex(entries: {
+        'aud3.json': {'primaryType': 'audio', 'content': 'Notes'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('aud3.json'));
+    });
+
+    test('flags an audio note with unexpected extra fields', () async {
+      final index = NoteIndex(entries: {
+        'aud4.json': {
+          'primaryType': 'audio',
+          'title': 'Episode 44',
+          'unexpected': 'field',
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('aud4.json'));
+    });
+
     test('flags an unknown primaryType', () async {
       final index = NoteIndex(entries: {
         'e.json': {'primaryType': 'contact', 'title': 'E'},

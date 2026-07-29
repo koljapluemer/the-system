@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, block, or frog.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, block, frog, or audio.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -178,6 +178,42 @@
         "primaryType": { "const": "frog" },
         "title": { "type": "string" },
         "aliases": { "$ref": "#/definitions/aliases" },
+        "rels": { "$ref": "#/definitions/rels" },
+        "extraData": { "$ref": "#/definitions/extraData" },
+        "triaged": { "$ref": "#/definitions/triaged" }
+      },
+      "required": ["primaryType", "title"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Audio notes: a downloaded podcast episode or audiobook with one attached audio file, tagged and surfaced at random by the Listen flow.",
+      "type": "object",
+      "properties": {
+        "primaryType": { "const": "audio" },
+        "title": { "type": "string" },
+        "aliases": { "$ref": "#/definitions/aliases" },
+        "content": { "type": "string" },
+        "audioFile": {
+          "description": "Filename of the attached audio file, resolved as <dataFolder>/audio/<audioFile>. Imported via the Attach Audio File action, which copies the source file into that folder and enforces an allowed-extension list — see lib/services/notes_service.dart's importMediaFile.",
+          "type": "string"
+        },
+        "tags": {
+          "description": "Free-text tags, edited via the Tags section (autocompletes against other audio notes' tags) and used by the Listen flow's by-tag filter.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "lastListenedAt": {
+          "description": "ISO 8601 timestamp stamped by the Listen flow whenever this note becomes the current track. Used to keep a note from repeating on the same day unless every other eligible note has already been listened to today.",
+          "type": ["string", "null"]
+        },
+        "hiddenUntil": {
+          "description": "ISO 8601 timestamp before which the Listen flow won't surface this note, stamped by its Hide for 1 Week/2 Months/1 Year actions.",
+          "type": ["string", "null"]
+        },
+        "neverListen": {
+          "description": "Permanently excludes this note from the Listen flow, stamped by its Never Listen Again action.",
+          "type": "boolean"
+        },
         "rels": { "$ref": "#/definitions/rels" },
         "extraData": { "$ref": "#/definitions/extraData" },
         "triaged": { "$ref": "#/definitions/triaged" }

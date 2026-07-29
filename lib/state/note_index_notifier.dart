@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/note_file.dart';
@@ -16,6 +18,7 @@ const _extraKeysOutsideFields = <String, List<String>>{
   'flashcard': ['fsrs'],
   'prompt': ['answers', 'lastShownAt'],
   'block': ['createdAt'],
+  'audio': ['audioFile', 'tags', 'lastListenedAt', 'hiddenUntil', 'neverListen'],
 };
 
 /// The app-wide cache of every note in the data folder. Built once per
@@ -158,6 +161,27 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
     return filename;
   }
 
+  /// Allowed extensions (lowercase, no dot) for the Attach Audio File action
+  /// — "mp3, m4a, and other reasonable audio formats" per the audio spec.
+  static const audioFileExtensions = ['mp3', 'm4a', 'wav', 'flac', 'ogg', 'aac', 'opus'];
+
+  /// Imports [source] into `<dataFolder>/audio/` (creating it if needed) and
+  /// stamps the resulting filename onto `filename`'s `audioFile`. Bespoke
+  /// rather than a plain [write] because it needs real file I/O beyond the
+  /// note's own JSON, the same reason [createBlock] is bespoke.
+  Future<void> attachAudioFile({required String filename, required File source}) async {
+    final folder = (await ref.read(dataFolderProvider.future))!;
+    final imported = await ref.read(notesServiceProvider).importMediaFile(
+          folder: folder,
+          subfolder: 'audio',
+          source: source,
+          allowedExtensions: audioFileExtensions,
+        );
+    final note = (await future).entries[filename];
+    if (note == null) return;
+    await write(filename, {...note, 'audioFile': imported});
+  }
+
   /// Forces a fresh full-folder rescan, e.g. as a manual escape hatch if the
   /// in-memory index is ever suspected to have drifted from disk.
   Future<void> refresh() async {
@@ -214,4 +238,18 @@ final noteIndexProvider = AsyncNotifierProvider<NoteIndexNotifier, NoteIndex>(No
 final normalizedNotesProvider = Provider<List<NormalizedNote>>((ref) {
   final index = ref.watch(noteIndexProvider).value;
   return index == null ? const [] : normalizeNotes(index.entries);
+});
+
+/// Every distinct tag used across `audio` notes, deduped and sorted, for
+/// [TagChipInput]'s autocomplete suggestions on both the Tags section and the
+/// Listen flow's by-tag filter.
+final knownAudioTagsProvider = Provider<List<String>>((ref) {
+  final index = ref.watch(noteIndexProvider).value;
+  if (index == null) return const [];
+  final tags = <String>{};
+  for (final note in index.entries.values) {
+    if (note['primaryType'] == 'audio') tags.addAll(note.stringList('tags'));
+  }
+  final sorted = tags.toList()..sort();
+  return sorted;
 });

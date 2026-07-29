@@ -1,18 +1,25 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../models/note_file.dart';
 import '../models/note_index.dart';
 import '../models/note_type_spec.dart';
 import '../state/note_index_notifier.dart';
+import '../state/providers.dart';
 import '../state/secondary_type_session.dart';
 import '../widgets/answers_section.dart';
 import '../widgets/array_list_section.dart';
+import '../widgets/audio_player_widget.dart';
 import '../widgets/change_type_dialog.dart';
 import '../widgets/inline_editable_text.dart';
 import '../widgets/logs_section.dart';
 import '../widgets/obsidian_import_dialog.dart';
 import '../widgets/relationship_dialog.dart';
+import '../widgets/tag_chip_input.dart';
 import '../widgets/undo_snackbar.dart';
 import 'note_editor_navigation.dart';
 
@@ -59,6 +66,33 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
     return ref
         .read(noteIndexProvider.notifier)
         .write(widget.filename, {...note, 'aliases': aliases});
+  }
+
+  Future<void> _saveTags(NoteFile note, List<String> tags) {
+    return ref.read(noteIndexProvider.notifier).write(widget.filename, {...note, 'tags': tags});
+  }
+
+  /// Opens the OS file picker restricted to
+  /// [NoteIndexNotifier.audioFileExtensions], then copies the chosen file
+  /// into `<dataFolder>/audio/` and stamps its filename onto the note (see
+  /// [NoteIndexNotifier.attachAudioFile]).
+  Future<void> _attachAudioFile(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: NoteIndexNotifier.audioFileExtensions,
+    );
+    final path = result?.files.single.path;
+    if (path == null) return;
+    try {
+      await ref
+          .read(noteIndexProvider.notifier)
+          .attachAudioFile(filename: widget.filename, source: File(path));
+    } on ArgumentError catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('${e.message}')));
+    }
   }
 
   /// Removes [rel] from the note's `rels`, also removing the mirrored rel
@@ -131,6 +165,60 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
     pushNoteEditor(context, spec: relatedSpec, filename: relatedFilename);
   }
 
+  Widget _tagsSection(BuildContext context, NoteFile note) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Tags', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          TagChipInput(
+            key: ValueKey(widget.filename),
+            tags: note.stringList('tags'),
+            knownTags: ref.watch(knownAudioTagsProvider),
+            onChanged: (tags) => _saveTags(note, tags),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _audioFileSection(BuildContext context, NoteFile note, String? folder) {
+    final audioFile = note['audioFile'] as String?;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Audio File', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          if (audioFile == null)
+            const Text('—')
+          else ...[
+            Text(audioFile),
+            if (folder != null) ...[
+              const SizedBox(height: 8),
+              AudioPlayerWidget(
+                key: ValueKey(audioFile),
+                file: File(p.join(folder, 'audio', audioFile)),
+              ),
+            ],
+          ],
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.attach_file),
+              label: Text(audioFile == null ? 'Attach Audio File' : 'Replace Audio File'),
+              onPressed: () => _attachAudioFile(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// The unified relationship list: every `[label, filename]` rel, in `rels`
   /// array order, each row labeled by its free-text label. Followed by a
   /// single "Add Relationship" button that prompts for a label and an
@@ -184,6 +272,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncIndex = ref.watch(noteIndexProvider);
+    final folder = ref.watch(dataFolderProvider).value;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.spec.label),
@@ -281,6 +370,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  if (widget.spec.showTags) _tagsSection(context, note),
+                  if (widget.spec.showAudioFile) _audioFileSection(context, note, folder),
                   if (widget.spec.showLogs) ...[
                     LogsSection(filename: widget.filename, note: note),
                     const SizedBox(height: 16),
