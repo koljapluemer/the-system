@@ -12,7 +12,8 @@ import '../widgets/audio_player_widget.dart';
 import '../widgets/tag_chip_input.dart';
 
 /// The Listen flow: an and/or/not by-tag filter above a random `audio`
-/// note's player, with a Next/Hide/Never-again button column below. One
+/// note's player, with an end-of-track action selector and manual Next button
+/// below. One
 /// route, rebuilding purely off [ListenState], matching [MemorizeScreen]'s
 /// shape.
 class ListenScreen extends ConsumerWidget {
@@ -51,33 +52,12 @@ class ListenScreen extends ConsumerWidget {
   }
 
   static const _actionLabels = {
-    ListenAction.next: 'Next',
+    ListenAction.next: "Don't Hide",
     ListenAction.hideForWeek: 'Hide for 1 Week',
     ListenAction.hideForTwoMonths: 'Hide for 2 Months',
     ListenAction.hideForYear: 'Hide for 1 Year',
     ListenAction.neverListenAgain: 'Never Listen Again',
   };
-
-  Widget _buttonColumn(ListenNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FilledButton(onPressed: notifier.next, child: const Text('Next')),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: notifier.hideForWeek, child: const Text('Hide for 1 Week')),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: notifier.hideForTwoMonths, child: const Text('Hide for 2 Months')),
-        const SizedBox(height: 8),
-        OutlinedButton(onPressed: notifier.hideForYear, child: const Text('Hide for 1 Year')),
-        const SizedBox(height: 8),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-          onPressed: notifier.neverListenAgain,
-          child: const Text('Never Listen Again'),
-        ),
-      ],
-    );
-  }
 
   Widget _actionRadioGroup(ListenState state, ListenNotifier notifier) {
     return RadioGroup<ListenAction>(
@@ -103,17 +83,15 @@ class ListenScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Autoplay'),
-          value: state.autoplayEnabled,
-          onChanged: notifier.setAutoplayEnabled,
+        _actionRadioGroup(state, notifier),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 56,
+          child: FilledButton(
+            onPressed: notifier.next,
+            child: const Text('Next'),
+          ),
         ),
-        const SizedBox(height: 4),
-        if (state.autoplayEnabled)
-          _actionRadioGroup(state, notifier)
-        else
-          _buttonColumn(notifier),
       ],
     );
   }
