@@ -16,6 +16,7 @@ import 'providers.dart';
 const _extraKeysOutsideFields = <String, List<String>>{
   'milestone': ['logs'],
   'flashcard': ['fsrs'],
+  'quote': ['memorizeProgress'],
   'prompt': ['answers', 'lastShownAt'],
   'block': ['createdAt'],
   'audio': ['audioFile', 'tags', 'lastListenedAt', 'hiddenUntil', 'neverListen'],
@@ -123,8 +124,9 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
   }
 
   /// Creates a new note of [spec]'s primaryType with [title] and an empty
-  /// string for every other field in [spec.fields] (e.g. `content`), for the
-  /// "new note" action on a type's Lists screen. [secondaryType], when
+  /// string (or `false`, for a [NoteFieldSpec.isBool] field) for every other
+  /// field in [spec.fields] (e.g. `content`), for the "new note" action on a
+  /// type's Lists screen. [secondaryType], when
   /// given, is stamped onto the note too (the Add screen's secondaryType
   /// picker, when [spec.secondaryTypes] is non-empty).
   Future<String> createFromSpec(
@@ -136,7 +138,7 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
     final content = <String, dynamic>{'primaryType': spec.primaryType, 'title': title};
     for (final field in spec.fields) {
       if (field.key == 'title') continue;
-      content[field.key] = '';
+      content[field.key] = field.isBool ? false : '';
     }
     if (secondaryType != null) content['secondaryType'] = secondaryType;
     final filename =
@@ -222,7 +224,7 @@ class NoteIndexNotifier extends AsyncNotifier<NoteIndex> {
       updated.remove('secondaryType');
     }
     for (final field in newSpec.fields) {
-      updated[field.key] ??= '';
+      updated[field.key] ??= field.isBool ? false : '';
     }
 
     await write(filename, updated);

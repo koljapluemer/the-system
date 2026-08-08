@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
-import '../models/note_file.dart';
-
 /// Renders one flashcard for the Memorize flow: front (and, once revealed,
 /// a thin rule plus back) as centered markdown, sized up since a card's
 /// content here is usually a single short line — no border or elevation, so
 /// the text reads as the screen rather than a box floating on it. Edit/
 /// delete live in the screen's AppBar instead of overlaid on the content.
+/// [front]/[back] are pre-resolved strings rather than a raw note, since a
+/// `quote` turn's text is generated on the fly (see
+/// lib/services/quote_flashcard_service.dart) rather than read straight off
+/// a note's own fields the way a `flashcard` note's are.
 class FlashcardCard extends StatelessWidget {
-  final NoteFile note;
+  final String front;
+  final String back;
   final bool revealed;
 
-  const FlashcardCard({super.key, required this.note, required this.revealed});
+  const FlashcardCard({super.key, required this.front, required this.back, required this.revealed});
 
   @override
   Widget build(BuildContext context) {
-    final front = note['front'] as String? ?? '';
-    final back = note['back'] as String? ?? '';
     final textTheme = Theme.of(context).textTheme;
 
     return Column(

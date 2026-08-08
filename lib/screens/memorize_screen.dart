@@ -33,7 +33,8 @@ class MemorizeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: () => pushNoteEditor(
                     context,
-                    spec: noteTypeSpecs.firstWhere((s) => s.primaryType == 'flashcard'),
+                    spec: noteTypeSpecs
+                        .firstWhere((s) => s.primaryType == state.currentNote!['primaryType']),
                     filename: state.currentFilename!,
                   ),
                 ),
@@ -77,7 +78,11 @@ class MemorizeScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: FlashcardCard(note: state.currentNote!, revealed: state.revealed),
+                child: FlashcardCard(
+                  front: state.displayFront,
+                  back: state.displayBack,
+                  revealed: state.revealed,
+                ),
               ),
             ),
           ),

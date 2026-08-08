@@ -7,11 +7,19 @@ class NoteFieldSpec {
   final bool multiline;
   final bool required;
 
+  /// True for a plain on/off flag (e.g. `quote`'s `memorize`) rendered as a
+  /// switch on [NoteDetailScreen] instead of [InlineEditableText]'s
+  /// pencil-edit text field, and defaulted to `false` (rather than `''`) by
+  /// `NoteIndexNotifier.createFromSpec`/`changePrimaryType`. [multiline] and
+  /// [required] are meaningless when this is true.
+  final bool isBool;
+
   const NoteFieldSpec({
     required this.key,
     required this.label,
     this.multiline = false,
     this.required = false,
+    this.isBool = false,
   });
 }
 
@@ -129,6 +137,18 @@ const noteTypeSpecs = [
       NoteFieldSpec(key: 'title', label: 'Title', required: true),
       NoteFieldSpec(key: 'front', label: 'Front', multiline: true, required: true),
       NoteFieldSpec(key: 'back', label: 'Back', multiline: true, required: true),
+    ],
+  ),
+  // memorizeProgress (see lib/services/quote_flashcard_service.dart) is
+  // deliberately left out of `fields` — it's managed by the Memorize flow
+  // directly, not the generic merge-on-save.
+  NoteTypeSpec(
+    primaryType: 'quote',
+    label: 'Quote',
+    fields: [
+      NoteFieldSpec(key: 'title', label: 'Quote', multiline: true, required: true),
+      NoteFieldSpec(key: 'memorize', label: 'Memorize', isBool: true),
+      NoteFieldSpec(key: 'isCommonplace', label: 'Commonplace', isBool: true),
     ],
   ),
   // lastShownAt/answers (see lib/services/prompt_service.dart) are

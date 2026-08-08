@@ -165,6 +165,62 @@ void main() {
       expect(result, contains('fc4.json'));
     });
 
+    test('accepts a well-formed new quote note with memorize off', () async {
+      final index = NoteIndex(entries: {
+        'q1.json': {
+          'primaryType': 'quote',
+          'title': 'Everything worth doing is worth doing well.\n\n— proverb about effort and devotion',
+          'memorize': false,
+          'isCommonplace': false,
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('q1.json')));
+    });
+
+    test('accepts a well-formed quote note with memorizeProgress data', () async {
+      final index = NoteIndex(entries: {
+        'q2.json': {
+          'primaryType': 'quote',
+          'title': 'Everything worth doing is worth doing well.',
+          'memorize': true,
+          'memorizeProgress': {
+            '0': {
+              'cardId': 1,
+              'state': 2,
+              'step': null,
+              'stability': 5.2,
+              'difficulty': 4.1,
+              'due': '2026-07-20T10:30:00.000Z',
+              'lastReview': '2026-07-14T10:30:00.000Z',
+            },
+          },
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, isNot(contains('q2.json')));
+    });
+
+    test('flags a quote note missing the required title field', () async {
+      final index = NoteIndex(entries: {
+        'q3.json': {'primaryType': 'quote'},
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('q3.json'));
+    });
+
+    test('flags a quote note with unexpected extra fields', () async {
+      final index = NoteIndex(entries: {
+        'q4.json': {
+          'primaryType': 'quote',
+          'title': 'Extra',
+          'unexpected': 'field',
+        },
+      });
+      final result = await service.findInvalid(index);
+      expect(result, contains('q4.json'));
+    });
+
     test('accepts a well-formed new prompt note with no interval/answers yet', () async {
       final index = NoteIndex(entries: {
         'p1.json': {'primaryType': 'prompt', 'title': 'Did you stretch today?'},

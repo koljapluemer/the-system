@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "The System note file",
-  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, prompt, block, frog, or audio.",
+  "description": "Schema for the flat JSON note files stored in the data folder. A conforming file matches exactly one of the note shapes this app currently reads and writes: art, milestone, activity, flashcard, quote, prompt, block, frog, or audio.",
   "definitions": {
     "rels": {
       "description": "Relationships to other note files: [label, filename] or [label, filename, mirrorLabel] — the optional third element records the reciprocal label written on the related note.",
@@ -117,6 +117,31 @@
         "extraData": { "$ref": "#/definitions/extraData" }
       },
       "required": ["primaryType", "title", "front", "back"],
+      "additionalProperties": false
+    },
+    {
+      "description": "Quote notes: a saved quote, held entirely in title (no separate body — same one-field convention as prompt). When memorize is true, title's first non-empty line is split into progressive word-removal flashcards generated on the fly by the Memorize flow (see lib/services/quote_flashcard_service.dart) instead of being stored as literal flashcard notes.",
+      "type": "object",
+      "properties": {
+        "primaryType": { "const": "quote" },
+        "title": { "type": "string" },
+        "aliases": { "$ref": "#/definitions/aliases" },
+        "memorize": {
+          "description": "When true, this quote's title feeds the Memorize flow's on-the-fly generated flashcards. False (or absent) leaves it a plain saved quote.",
+          "type": "boolean"
+        },
+        "isCommonplace": {
+          "description": "Reserved for future use; has no behavior yet.",
+          "type": "boolean"
+        },
+        "memorizeProgress": {
+          "description": "Per-level fsrs.Card learning data for this quote's generated flashcards (see lib/services/quote_flashcard_service.dart), keyed by removal level as a string (\"0\", \"1\", ...) in the order levels are introduced. A level's absence means it has never been practiced; absent/omitted entirely until the first level is first practiced.",
+          "type": "object"
+        },
+        "rels": { "$ref": "#/definitions/rels" },
+        "extraData": { "$ref": "#/definitions/extraData" }
+      },
+      "required": ["primaryType", "title"],
       "additionalProperties": false
     },
     {
